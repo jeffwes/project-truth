@@ -94,6 +94,8 @@ def make_ui():
                 ui.output_text("debug_analyze"),
                 # debug probe value (set via Shiny.setInputValue from the client)
                 ui.output_text("debug_probe"),
+                ui.output_text("debug_selected"),
+                ui.output_text("debug_submit"),
             ),
             ui.div(
                 ui.output_ui("assertions_ui"),
@@ -265,6 +267,26 @@ def server(input, output, session):
         except Exception:
             # No probe value yet
             return "(no probe)"
+
+    @output
+    @render.text
+    def debug_selected():
+        try:
+            sel = input.selected_assertions()
+            logger.info(f"debug_selected_assertions value: {sel}")
+            return str(sel)
+        except Exception:
+            return "(no selection)"
+
+    @output
+    @render.text
+    def debug_submit():
+        try:
+            v = input.submit_checks()
+            logger.info(f"debug_input_submit value: {v}")
+            return str(v)
+        except Exception:
+            return "(no submit)"
 
     # Do not return the server function; Shiny expects the handlers to be
     # registered by defining them in this scope. Ending the function allows
