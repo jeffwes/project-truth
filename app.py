@@ -111,16 +111,30 @@ def server(input, output, session):
     # reactive holders for assertions and results
     assertions_rv = reactive.Value(None)
     results_rv = reactive.Value(None)
+    # simple per-session counter to detect new clicks from an Effect
+    _last_analyze = reactive.Value(0)
 
     # Step 1: extract assertions and present them to the user as choices
-    @reactive.event(input.analyze)
-    def extract_assertions():
-        logger.info("extract_assertions() triggered")
+    # Use an Effect to observe `input.analyze()` and run extraction when
+    # the counter increments. This is more reliable across some Shiny
+    # client versions and avoids mysterious decorator-related misses.
+    @reactive.Effect
+    def _watch_analyze():
+        try:
+            v = input.analyze()
+        except Exception:
+            return
+        # only run when the button count increases
+        if not v or v == _last_analyze.get():
+            return
+        _last_analyze.set(v)
+        logger.info("watch_analyze triggered")
+
         text = input.text_in()
         url = input.url_in()
         youtube = input.youtube_in()
 
-        # If no GEMINI key present we still allow extraction (spaCy only)
+        # If url/youtube provided, fetch; else use passthrough_text
         if url:
             text = fetch_from_url(url)
         elif youtube:
