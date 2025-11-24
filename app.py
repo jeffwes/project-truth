@@ -220,21 +220,33 @@ def server(input, output, session):
             results_rv.set(pd.DataFrame([{"assertion": "(invalid selection)"}]))
             return
 
-        checked = check_facts(to_check)
-        classified = classify_harari(checked)
+        # Immediately show a processing placeholder so the user sees feedback
+        results_rv.set(pd.DataFrame([{"assertion": "(processing...)"}]))
 
-        rows = []
-        for item in classified:
-            rows.append({
-                "assertion": item.get("assertion"),
-                "harari_tier": item.get("harari_tier"),
-                "rating": item.get("rating"),
-                "summary": item.get("summary"),
-                "source_url": item.get("source_url"),
-            })
+        try:
+            logger.info("watch_submit: calling check_facts()")
+            checked = check_facts(to_check)
+            logger.info(f"watch_submit: check_facts returned {len(checked) if checked else 0} items")
 
-        results_rv.set(pd.DataFrame(rows))
-        logger.info(f"watch_submit set results with {len(rows)} rows")
+            logger.info("watch_submit: calling classify_harari()")
+            classified = classify_harari(checked)
+            logger.info(f"watch_submit: classify_harari returned {len(classified) if classified else 0} items")
+
+            rows = []
+            for item in classified:
+                rows.append({
+                    "assertion": item.get("assertion"),
+                    "harari_tier": item.get("harari_tier"),
+                    "rating": item.get("rating"),
+                    "summary": item.get("summary"),
+                    "source_url": item.get("source_url"),
+                })
+
+            results_rv.set(pd.DataFrame(rows))
+            logger.info(f"watch_submit set results with {len(rows)} rows")
+        except Exception:
+            logger.exception("watch_submit: error during fact-check/classify")
+            results_rv.set(pd.DataFrame([{"assertion": "(error during check)"}]))
 
     @output
     @render.table
