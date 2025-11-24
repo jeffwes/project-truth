@@ -96,6 +96,8 @@ def make_ui():
                 ui.output_text("debug_probe"),
                 ui.output_text("debug_selected"),
                 ui.output_text("debug_submit"),
+                # processing indicator (spinner)
+                ui.output_ui("processing_ui"),
             ),
             ui.div(
                 ui.output_ui("assertions_ui"),
@@ -117,6 +119,8 @@ def server(input, output, session):
     _last_analyze = reactive.Value(0)
     # counter for submit button
     _last_submit = reactive.Value(0)
+    # processing flag to drive spinner / busy indicator
+    processing_rv = reactive.Value(False)
 
     # Step 1: extract assertions and present them to the user as choices
     # Use an Effect to observe `input.analyze()` and run extraction when
@@ -220,9 +224,9 @@ def server(input, output, session):
             results_rv.set(pd.DataFrame([{"assertion": "(invalid selection)"}]))
             return
 
-        # Immediately show a processing placeholder so the user sees feedback
+        # mark processing state so UI shows spinner
+        processing_rv.set(True)
         results_rv.set(pd.DataFrame([{"assertion": "(processing...)"}]))
-
         try:
             logger.info("watch_submit: calling check_facts()")
             checked = check_facts(to_check)
@@ -247,6 +251,8 @@ def server(input, output, session):
         except Exception:
             logger.exception("watch_submit: error during fact-check/classify")
             results_rv.set(pd.DataFrame([{"assertion": "(error during check)"}]))
+        finally:
+            processing_rv.set(False)
 
     @output
     @render.table
@@ -310,6 +316,18 @@ def server(input, output, session):
             return str(v)
         except Exception:
             return "(no submit)"
+
+    @output
+    @render.ui
+    def processing_ui():
+        try:
+            busy = processing_rv.get()
+        except Exception:
+            busy = False
+        if busy:
+            # bootstrap spinner (should be available in Shiny)
+            return ui.HTML('<div class="spinner-border text-primary" role="status" style="width:1.5rem; height:1.5rem; vertical-align: middle;"><span class="visually-hidden">Loading...</span></div> <span>Processing...</span>')
+        return ui.HTML("")
 
     # Do not return the server function; Shiny expects the handlers to be
     # registered by defining them in this scope. Ending the function allows
