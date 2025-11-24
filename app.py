@@ -115,6 +115,8 @@ def server(input, output, session):
     results_rv = reactive.Value(None)
     # simple per-session counter to detect new clicks from an Effect
     _last_analyze = reactive.Value(0)
+    # counter for submit button
+    _last_submit = reactive.Value(0)
 
     # Step 1: extract assertions and present them to the user as choices
     # Use an Effect to observe `input.analyze()` and run extraction when
@@ -179,9 +181,18 @@ def server(input, output, session):
         )
 
     # Step 2: when user submits selected assertions, run LLM check + Harari classification
-    @reactive.event(input.submit_checks)
-    def run_selected_checks():
-        logger.info("run_selected_checks() triggered")
+    # Use an Effect watcher for submit button to avoid decorator issues
+    @reactive.Effect
+    def _watch_submit():
+        try:
+            v = input.submit_checks()
+        except Exception:
+            return
+        if not v or v == _last_submit.get():
+            return
+        _last_submit.set(v)
+        logger.info("watch_submit triggered")
+
         # Check API key presence; if missing, show friendly message
         from os import environ
         if not environ.get("GEMINI_API_KEY"):
@@ -223,7 +234,7 @@ def server(input, output, session):
             })
 
         results_rv.set(pd.DataFrame(rows))
-        logger.info(f"run_selected_checks set results with {len(rows)} rows")
+        logger.info(f"watch_submit set results with {len(rows)} rows")
 
     @output
     @render.table
