@@ -58,6 +58,7 @@ def server(input, output, session):
     # Step 1: extract assertions and present them to the user as choices
     @reactive.event(input.analyze)
     def extract_assertions():
+        logger.info("extract_assertions() triggered")
         text = input.text_in()
         url = input.url_in()
         youtube = input.youtube_in()
@@ -71,6 +72,7 @@ def server(input, output, session):
             text = passthrough_text(text)
 
         assertions = extract_facts(text)
+        logger.info(f"extract_facts returned {len(assertions) if assertions else 0} assertions")
         if not assertions:
             assertions_rv.set([])
             results_rv.set(pd.DataFrame([{"assertion": "(no assertions found)"}]))
@@ -84,6 +86,7 @@ def server(input, output, session):
     @output
     @render.ui
     def assertions_ui():
+        logger.info("rendering assertions_ui")
         assertions = assertions_rv.get()
         if assertions is None:
             return ui.HTML("<p>Paste text and click 'Extract Assertions' to begin.</p>")
@@ -100,6 +103,7 @@ def server(input, output, session):
     # Step 2: when user submits selected assertions, run LLM check + Harari classification
     @reactive.event(input.submit_checks)
     def run_selected_checks():
+        logger.info("run_selected_checks() triggered")
         # Check API key presence; if missing, show friendly message
         from os import environ
         if not environ.get("GEMINI_API_KEY"):
@@ -141,6 +145,7 @@ def server(input, output, session):
             })
 
         results_rv.set(pd.DataFrame(rows))
+        logger.info(f"run_selected_checks set results with {len(rows)} rows")
 
     @output
     @render.table
@@ -152,7 +157,9 @@ def server(input, output, session):
             return pd.DataFrame([])
         return df
 
-    return server
+    # Do not return the server function; Shiny expects the handlers to be
+    # registered by defining them in this scope. Ending the function allows
+    # Shiny to use it as the server callback.
 
 
 app = App(app_ui, server)
