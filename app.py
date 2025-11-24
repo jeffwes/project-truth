@@ -76,6 +76,8 @@ def make_ui():
                 ui.input_text("url_in", "Or enter URL", value=""),
                 ui.input_text("youtube_in", "Or YouTube URL", value=""),
                 ui.input_action_button("analyze", "Extract Assertions"),
+                # debug: show the raw numeric value of the action button
+                ui.output_text("debug_analyze"),
             ),
             ui.div(
                 ui.output_ui("assertions_ui"),
@@ -195,6 +197,18 @@ def server(input, output, session):
             # show empty table placeholder
             return pd.DataFrame([])
         return df
+
+    # Debug output: logs the raw value of the `analyze` action button when it changes.
+    @output
+    @render.text
+    def debug_analyze():
+        try:
+            v = input.analyze()
+            logger.info(f"debug_input_analyze value: {v}")
+            return str(v)
+        except Exception:
+            logger.exception("debug_analyze error")
+            return "(error)"
 
     # Do not return the server function; Shiny expects the handlers to be
     # registered by defining them in this scope. Ending the function allows
