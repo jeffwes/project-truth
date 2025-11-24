@@ -30,28 +30,9 @@ from analysis_engine import extract_facts, check_facts, classify_harari
 
 
 def make_ui():
-    return ui.page_fluid(
-        ui.layout_sidebar(
-            ui.sidebar(
-                ui.h3("Project Truth — Harari Fact Analyzer"),
-                ui.input_text_area("text_in", "Paste text", rows=6),
-                ui.input_text("url_in", "Or enter URL", value=""),
-                ui.input_text("youtube_in", "Or YouTube URL", value=""),
-                ui.input_action_button("analyze", "Extract Assertions"),
-            ),
-            ui.div(
-                ui.output_ui("assertions_ui"),
-                ui.output_table("results_table")
-            )
-        )
-    )
-
-    # Inject a small client-side script to help debug clicks.
-    # This will show a browser alert when the 'analyze' button is clicked
-    # and log to the console. It does not change server behavior.
-    # Note: Shiny may render elements asynchronously; we listen on the
-    # document and check event targets.
-    ui.tags.script(
+    # Build UI and include client-side debug script inside the page so
+    # it will actually be delivered to the browser.
+    debug_script = ui.tags.script(
         "(function() {\n"
         "  function attach() {\n"
         "    try {\n"
@@ -75,11 +56,9 @@ def make_ui():
         "      }\n"
         "    } catch(err) { console.error('attach error', err); }\n"
         "  }\n"
-        "  // try immediately and then poll a few times in case Shiny renders later\n"
         "  attach();\n"
         "  var tries = 0;\n"
         "  var iv = setInterval(function(){ tries++; attach(); if (tries>20) clearInterval(iv); }, 250);\n"
-        "  // also capture bubbled clicks (fallback)\n"
         "  document.addEventListener('click', function(e){\n"
         "    try {\n"
         "      var btn = e.target.closest && e.target.closest('#analyze, #submit_checks');\n"
@@ -89,6 +68,23 @@ def make_ui():
         "    } catch(_){}\n"
         "  }, true);\n"
         "})();"
+    )
+
+    return ui.page_fluid(
+        ui.layout_sidebar(
+            ui.sidebar(
+                ui.h3("Project Truth — Harari Fact Analyzer"),
+                ui.input_text_area("text_in", "Paste text", rows=6),
+                ui.input_text("url_in", "Or enter URL", value=""),
+                ui.input_text("youtube_in", "Or YouTube URL", value=""),
+                ui.input_action_button("analyze", "Extract Assertions"),
+            ),
+            ui.div(
+                ui.output_ui("assertions_ui"),
+                ui.output_table("results_table")
+            )
+        ),
+        debug_script,
     )
 
 
