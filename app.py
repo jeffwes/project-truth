@@ -65,6 +65,20 @@ def make_ui():
         "      }\n"
         "    } catch(_){}\n"
         "  }, true);\n"
+        # probe: also set a custom input value using Shiny.setInputValue when analyze is clicked
+        "  try {\n"
+        "    if (window.Shiny && Shiny.setInputValue) {\n"
+        "      var el = document.getElementById('analyze');\n"
+        "      if (el) {\n"
+        "        el.addEventListener('click', function(){\n"
+        "          try {\n"
+        "            Shiny.setInputValue('probe_analyze', Date.now(), {priority: 'event'});\n"
+        "            console.log('Client(Debug): Shiny.setInputValue probe_analyze fired');\n"
+        "          } catch(e){ console.error('probe setInput error', e); }\n"
+        "        });\n"
+        "      }\n"
+        "    }\n"
+        "  } catch(e){ console.error('probe attach err', e); }\n"
         "})();"
     )
 
@@ -78,6 +92,8 @@ def make_ui():
                 ui.input_action_button("analyze", "Extract Assertions"),
                 # debug: show the raw numeric value of the action button
                 ui.output_text("debug_analyze"),
+                # debug probe value (set via Shiny.setInputValue from the client)
+                ui.output_text("debug_probe"),
             ),
             ui.div(
                 ui.output_ui("assertions_ui"),
@@ -222,6 +238,17 @@ def server(input, output, session):
         except Exception:
             logger.exception("debug_analyze error")
             return "(error)"
+
+        @output
+        @render.text
+        def debug_probe():
+            try:
+                v = input.probe_analyze()
+                logger.info(f"debug_probe_analyze value: {v}")
+                return str(v)
+            except Exception:
+                # No probe value yet
+                return "(no probe)"
 
     # Do not return the server function; Shiny expects the handlers to be
     # registered by defining them in this scope. Ending the function allows
