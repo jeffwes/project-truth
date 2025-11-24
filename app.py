@@ -164,8 +164,10 @@ def server(input, output, session):
         if not assertions:
             return ui.HTML("<p>No assertions detected.</p>")
 
-        # choices: (value, label) where value is index as string
-        choices = [(str(i), a) for i, a in enumerate(assertions)]
+        # choices: use a mapping of value->label (both strings)
+        # to avoid passing tuples which may be treated as tag
+        # attributes and cause type errors.
+        choices = {str(i): str(a) for i, a in enumerate(assertions)}
         # Use a simple container div rather than tag_list (some Shiny
         # versions don't provide `tag_list`). This keeps the UI simple
         # and avoids attribute errors in the browser.
@@ -253,16 +255,16 @@ def server(input, output, session):
             logger.exception("debug_analyze error")
             return "(error)"
 
-        @output
-        @render.text
-        def debug_probe():
-            try:
-                v = input.probe_analyze()
-                logger.info(f"debug_probe_analyze value: {v}")
-                return str(v)
-            except Exception:
-                # No probe value yet
-                return "(no probe)"
+    @output
+    @render.text
+    def debug_probe():
+        try:
+            v = input.probe_analyze()
+            logger.info(f"debug_probe_analyze value: {v}")
+            return str(v)
+        except Exception:
+            # No probe value yet
+            return "(no probe)"
 
     # Do not return the server function; Shiny expects the handlers to be
     # registered by defining them in this scope. Ending the function allows
