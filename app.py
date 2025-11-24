@@ -205,6 +205,20 @@ def server(input, output, session):
         try:
             v = input.analyze()
             logger.info(f"debug_input_analyze value: {v}")
+            # If the reactive event handler didn't run for some reason,
+            # invoke the extraction directly when we detect a new click
+            # and there are no assertions yet. This is a temporary
+            # debugging fallback to determine whether events are being
+            # lost before they reach the server-side handler.
+            try:
+                if v and (assertions_rv.get() is None):
+                    logger.info("debug_analyze: calling extract_assertions() fallback")
+                    try:
+                        extract_assertions()
+                    except Exception:
+                        logger.exception("fallback extract_assertions() raised")
+            except Exception:
+                logger.exception("debug_analyze internal check failed")
             return str(v)
         except Exception:
             logger.exception("debug_analyze error")
