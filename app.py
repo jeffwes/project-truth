@@ -46,6 +46,27 @@ def make_ui():
         )
     )
 
+    # Inject a small client-side script to help debug clicks.
+    # This will show a browser alert when the 'analyze' button is clicked
+    # and log to the console. It does not change server behavior.
+    # Note: Shiny may render elements asynchronously; we listen on the
+    # document and check event targets.
+    ui.tags.script(
+        "document.addEventListener('click', function(e) {\n"
+        "  try {\n"
+        "    var id = e.target && e.target.id;\n"
+        "    if (id === 'analyze') {\n"
+        "      console.log('Client: analyze button clicked');\n"
+        "      alert('Client: Extract Assertions clicked');\n"
+        "    }\n"
+        "    if (id === 'submit_checks') {\n"
+        "      console.log('Client: submit_checks clicked');\n"
+        "      alert('Client: Fact-check selected clicked');\n"
+        "    }\n"
+        "  } catch (err) { console.error(err); }\n"
+        "}, false);"
+    )
+
 
 app_ui = make_ui()
 
