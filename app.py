@@ -136,7 +136,10 @@ def server(input, output, session):
 
         # choices: (value, label) where value is index as string
         choices = [(str(i), a) for i, a in enumerate(assertions)]
-        return ui.tag_list(
+        # Use a simple container div rather than tag_list (some Shiny
+        # versions don't provide `tag_list`). This keeps the UI simple
+        # and avoids attribute errors in the browser.
+        return ui.div(
             ui.input_checkbox_group("selected_assertions", "Select assertions to fact-check", choices=choices),
             ui.input_action_button("submit_checks", "Fact-check selected")
         )
@@ -210,15 +213,11 @@ def server(input, output, session):
             # and there are no assertions yet. This is a temporary
             # debugging fallback to determine whether events are being
             # lost before they reach the server-side handler.
-            try:
-                if v and (assertions_rv.get() is None):
-                    logger.info("debug_analyze: calling extract_assertions() fallback")
-                    try:
-                        extract_assertions()
-                    except Exception:
-                        logger.exception("fallback extract_assertions() raised")
-            except Exception:
-                logger.exception("debug_analyze internal check failed")
+            # NOTE: removed fallback extraction call here — calling
+            # `extract_assertions()` directly from a render function can
+            # cause Shiny client/server output-state errors. Keep this
+            # render purely observational (logs the click value) so we
+            # can diagnose without interfering with Shiny's lifecycle.
             return str(v)
         except Exception:
             logger.exception("debug_analyze error")
