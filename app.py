@@ -27,6 +27,7 @@ from src.content_ingestion import ContentIngester
 from src.reality_taxonomy import RealityTaxonomyAnalyzer
 from src.moral_foundations import MoralFoundationsAnalyzer
 from src.tribal_resonance import TribalResonancePredictor
+from src.linguistic_analysis import LinguisticAnalyzer
 
 
 # UI Definition
@@ -154,6 +155,15 @@ app_ui = ui.page_fluid(
                     ui.h3("Predicted Social Tribe Resonance"),
                     ui.p("Which groups will find this content compelling."),
                     ui.output_ui("tribes_ui"),
+                )
+            ),
+            
+            ui.nav_panel(
+                "Linguistic Analysis",
+                ui.div(
+                    ui.h3("Linguistic Forensics"),
+                    ui.p("Language pattern analysis for manipulation detection."),
+                    ui.output_ui("linguistic_ui"),
                 )
             ),
             
@@ -551,7 +561,8 @@ TEXT:
                         "ingestion": ingestion,
                         "taxonomy": taxonomy_result,
                         "foundations": foundations_result,
-                        "tribes": tribes_result
+                        "tribes": tribes_result,
+                        "linguistic": None  # Quick mode skips linguistic (can add later if needed)
                     }
                     analysis_results.set(results_obj)
                     total_time = time.perf_counter() - t0
@@ -576,6 +587,7 @@ TEXT:
             taxonomy_analyzer = RealityTaxonomyAnalyzer(client)
             foundations_analyzer = MoralFoundationsAnalyzer(client)
             tribal_predictor = TribalResonancePredictor(client)
+            linguistic_analyzer = LinguisticAnalyzer(client)
 
             taxonomy_start = time.perf_counter()
             foundations_start = taxonomy_start
@@ -651,13 +663,40 @@ TEXT:
                 await reactive.flush()
                 return
 
+            progress_phase.set("Analyzing linguistic patterns...")
+            await reactive.flush()
+            linguistic_start = time.perf_counter()
+            ling_task = asyncio.create_task(asyncio.to_thread(linguistic_analyzer.analyze_content, content))
+            cancel_task = asyncio.create_task(_wait_for_cancel())
+            done, pending = await asyncio.wait({ling_task, cancel_task}, return_when=asyncio.FIRST_COMPLETED)
+            if cancel_task in done and cancel_requested.get():
+                _detach_task(ling_task)
+                print("[ResonanceEngine] Cancelled during linguistic analysis (abandoning result)")
+                canceled.set(True)
+                processing.set(False)
+                progress_phase.set("")
+                await reactive.flush()
+                return
+            cancel_task.cancel()
+            linguistic_result = await ling_task
+            linguistic_end = time.perf_counter()
+
+            if cancel_requested.get():
+                print("[ResonanceEngine] Canceled after linguistic analysis")
+                canceled.set(True)
+                processing.set(False)
+                progress_phase.set("")
+                await reactive.flush()
+                return
+
             results_obj = {
                 "content": content,
                 "content_summary": content_summary,
                 "ingestion": ingestion,
                 "taxonomy": taxonomy_result,
                 "foundations": foundations_result,
-                "tribes": tribal_result
+                "tribes": tribal_result,
+                "linguistic": linguistic_result
             }
             analysis_results.set(results_obj)
 
@@ -668,6 +707,7 @@ TEXT:
                 "taxonomy": taxonomy_end - taxonomy_start,
                 "foundations": foundations_end - foundations_start,
                 "tribal": tribal_end - tribal_start,
+                "linguistic": linguistic_end - linguistic_start,
                 "total": total_time
             }
             perf_metrics.set(perf_obj)
@@ -1122,6 +1162,226 @@ TEXT:
             ))
         
         return ui.div(*tribe_cards)
+    
+    # Linguistic Analysis UI
+    @output
+    @render.ui
+    def linguistic_ui():
+        results = analysis_results.get()
+        if not results:
+            return ui.p("No analysis available.")
+        
+        linguistic = results.get("linguistic")
+        if not linguistic:
+            return ui.div(
+                ui.p("Linguistic analysis not available. Switch to Deep mode and re-run analysis.", style="color:#666;"),
+                class_="foundation-card"
+            )
+        
+        import json as _json
+        sections = []
+        
+        # 1. Agency & Responsibility (Passive Voice)
+        agency = linguistic.get("agency_analysis", {})
+        passive_pct = agency.get("passive_voice_percent", 0)
+        examples = agency.get("hidden_actor_examples", [])
+        interp = agency.get("responsibility_interpretation", "")
+        
+        # Slider visualization (horizontal bar)
+        slider_pos = passive_pct  # 0-100
+        slider_html = f"""
+        <div style="margin:20px 0;">
+            <div style="display:flex; justify-content:space-between; font-size:0.85em; color:#666; margin-bottom:6px;">
+                <span>High Agency (Actors Clear)</span>
+                <span>High Obfuscation (Actors Hidden)</span>
+            </div>
+            <div style="position:relative; height:30px; background:linear-gradient(to right, #28a745 0%, #ffc107 50%, #dc3545 100%); border-radius:15px;">
+                <div style="position:absolute; left:{slider_pos}%; top:50%; transform:translate(-50%,-50%); width:16px; height:16px; background:#fff; border:3px solid #333; border-radius:50%;"></div>
+            </div>
+            <div style="text-align:center; margin-top:8px; font-weight:600;">{passive_pct}% Passive Voice</div>
+        </div>
+        """
+        
+        agency_card = ui.div(
+            ui.h4("1. Agency & Responsibility"),
+            ui.HTML(slider_html),
+            ui.p(interp, style="font-size:0.9em; color:#333;"),
+            ui.tags.strong("Hidden Actor Examples:", style="font-size:0.9em;"),
+            ui.tags.ul(*[ui.tags.li(ex, style="font-size:0.85em;") for ex in examples[:4]]) if examples else ui.p("No passive constructions detected.", style="font-size:0.85em; color:#666;"),
+            class_="foundation-card"
+        )
+        sections.append(agency_card)
+        
+        # 2. Othering Index (Us vs Them)
+        polar = linguistic.get("polarization_metrics", {})
+        ratio = polar.get("us_vs_them_ratio", 0.0)
+        ingroup = polar.get("ingroup_pronouns", {})
+        outgroup = polar.get("outgroup_pronouns", {})
+        outgroup_label = polar.get("most_used_outgroup_label")
+        polar_interp = polar.get("polarization_interpretation", "")
+        
+        in_total = sum(ingroup.values()) if ingroup else 0
+        out_total = sum(outgroup.values()) if outgroup else 0
+        
+        # Diverging bar chart data
+        bar_data = {
+            "type": "bar",
+            "orientation": "h",
+            "y": ["In-Group (We/Us/Our)", "Out-Group (They/Them/Those)"],
+            "x": [in_total, out_total],
+            "marker": {"color": ["#007bff", "#dc3545"]},
+            "text": [f"{in_total} uses", f"{out_total} uses"],
+            "textposition": "outside"
+        }
+        bar_layout = {
+            "margin": {"l": 180, "r": 40, "t": 20, "b": 40},
+            "height": 180,
+            "xaxis": {"title": "Pronoun Count"},
+            "paper_bgcolor": "#f8f9fa"
+        }
+        bar_json = _json.dumps({"data": [bar_data], "layout": bar_layout})
+        bar_html = f"""
+        <div id="othering_chart" style="width:100%;height:180px;"></div>
+        <script>
+          (function(){{
+            var spec = {bar_json};
+            if (window.Plotly && document.getElementById('othering_chart')) {{
+              Plotly.newPlot('othering_chart', spec.data, spec.layout, {{displayModeBar:false}});
+            }}
+          }})();
+        </script>
+        """
+        
+        othering_card = ui.div(
+            ui.h4("2. Othering Index (Us vs. Them)"),
+            ui.p(f"Ratio: {ratio:.2f} | Out-Group Label: {outgroup_label or 'None detected'}", style="font-weight:600;"),
+            ui.HTML(bar_html),
+            ui.p(polar_interp, style="font-size:0.9em; color:#333; margin-top:12px;"),
+            class_="foundation-card"
+        )
+        sections.append(othering_card)
+        
+        # 3. Dogmatism Score (Certainty Gauge)
+        cert = linguistic.get("certainty_metrics", {})
+        dogma_score = cert.get("dogmatism_score", 0)
+        high_mod = cert.get("high_modality_count", 0)
+        low_mod = cert.get("low_modality_count", 0)
+        modals = cert.get("dominant_modals", [])
+        cert_interp = cert.get("certainty_interpretation", "")
+        
+        # Gauge visualization (semi-circle indicator)
+        gauge_color = "#28a745" if dogma_score < 40 else "#ffc107" if dogma_score < 70 else "#dc3545"
+        gauge_html = f"""
+        <div style="text-align:center; margin:20px 0;">
+            <div style="font-size:3em; font-weight:700; color:{gauge_color};">{dogma_score}</div>
+            <div style="font-size:1.1em; color:#666;">Certainty Score (0-100)</div>
+            <div style="margin-top:12px; font-size:0.9em; color:#666;">
+                High Modality: {high_mod} | Low Modality: {low_mod}
+            </div>
+        </div>
+        """
+        
+        dogma_card = ui.div(
+            ui.h4("3. Dogmatism Score"),
+            ui.HTML(gauge_html),
+            ui.p(cert_interp, style="font-size:0.9em; color:#333;"),
+            ui.tags.strong("Dominant Modals:", style="font-size:0.9em;"),
+            ui.p(", ".join(modals) if modals else "None detected", style="font-size:0.85em; color:#666;"),
+            class_="foundation-card"
+        )
+        sections.append(dogma_card)
+        
+        # 4. Complexity & Populism
+        read = linguistic.get("readability", {})
+        grade = read.get("grade_level", 0.0)
+        style_class = read.get("style_classification", "Unknown")
+        lex_density = read.get("lexical_density", 0.0)
+        read_interp = read.get("complexity_interpretation", "")
+        
+        # Simple bar comparing to national average (assume 8th grade = national avg)
+        nat_avg = 8.0
+        grade_color = "#007bff" if grade > nat_avg else "#28a745"
+        complexity_html = f"""
+        <div style="margin:20px 0;">
+            <div style="font-size:1.8em; font-weight:600; color:{grade_color}; text-align:center;">
+                Grade Level: {grade:.1f}
+            </div>
+            <div style="text-align:center; font-size:0.9em; color:#666; margin-top:6px;">
+                National Average: {nat_avg} | Style: {style_class}
+            </div>
+            <div style="margin-top:12px; font-size:0.9em; color:#666; text-align:center;">
+                Lexical Density: {lex_density:.1%}
+            </div>
+        </div>
+        """
+        
+        complexity_card = ui.div(
+            ui.h4("4. Complexity & Populism Fingerprint"),
+            ui.HTML(complexity_html),
+            ui.p(read_interp, style="font-size:0.9em; color:#333;"),
+            class_="foundation-card"
+        )
+        sections.append(complexity_card)
+        
+        # 5. Persuasion Signature (Scatter plot)
+        persuasion = linguistic.get("persuasion_signature", {})
+        density = persuasion.get("rhetorical_density_score", 0.0)
+        valence = persuasion.get("net_valence_score", 0.0)
+        classification = persuasion.get("classification", "Unknown")
+        devices = persuasion.get("dominant_devices", [])
+        pers_interp = persuasion.get("signature_interpretation", "")
+        
+        # Scatter plot with single point
+        scatter_data = {
+            "type": "scatter",
+            "mode": "markers+text",
+            "x": [valence],
+            "y": [density],
+            "marker": {"size": 20, "color": "#dc3545" if valence < 0 else "#28a745"},
+            "text": [classification],
+            "textposition": "top center",
+            "textfont": {"size": 12, "color": "#333"}
+        }
+        scatter_layout = {
+            "margin": {"l": 60, "r": 40, "t": 30, "b": 50},
+            "height": 320,
+            "xaxis": {"title": "Valence (Negative ← → Positive)", "range": [-1.2, 1.2], "zeroline": True},
+            "yaxis": {"title": "Rhetorical Density", "range": [0, max(100, density * 1.2)]},
+            "paper_bgcolor": "#f8f9fa",
+            "annotations": [
+                {"x": -0.7, "y": density * 0.9, "text": "Attack", "showarrow": False, "font": {"size": 10, "color": "#999"}},
+                {"x": 0.7, "y": density * 0.9, "text": "Inspire", "showarrow": False, "font": {"size": 10, "color": "#999"}},
+                {"x": 0, "y": 10, "text": "Factual", "showarrow": False, "font": {"size": 10, "color": "#999"}}
+            ]
+        }
+        scatter_json = _json.dumps({"data": [scatter_data], "layout": scatter_layout})
+        scatter_html = f"""
+        <div id="persuasion_scatter" style="width:100%;height:320px;"></div>
+        <script>
+          (function(){{
+            var spec = {scatter_json};
+            if (window.Plotly && document.getElementById('persuasion_scatter')) {{
+              Plotly.newPlot('persuasion_scatter', spec.data, spec.layout, {{displayModeBar:false}});
+            }}
+          }})();
+        </script>
+        """
+        
+        persuasion_card = ui.div(
+            ui.h4("5. Persuasion Signature"),
+            ui.p(f"Density: {density:.1f} devices/1k words | Valence: {valence:+.2f} | Classification: {classification}", style="font-weight:600;"),
+            ui.HTML(scatter_html),
+            ui.p(pers_interp, style="font-size:0.9em; color:#333; margin-top:12px;"),
+            ui.tags.strong("Dominant Rhetorical Devices:", style="font-size:0.9em;"),
+            ui.tags.ul(*[
+                ui.tags.li(f"{d.get('name', 'Unknown')}: {d.get('count', 0)} uses ({d.get('valence', 'neutral')})", style="font-size:0.85em;")
+                for d in devices[:6]
+            ]) if devices else ui.p("No devices detected.", style="font-size:0.85em; color:#666;"),
+            class_="foundation-card"
+        )
+        sections.append(persuasion_card)
+        
+        return ui.div(*sections)
     
     # Export handlers
     @output
