@@ -378,6 +378,22 @@ def server(input, output, session):
                 return
             content = ingestion["content"]
 
+            # Generate a concise neutral summary (2 sentences) of the submitted content
+            content_summary = None
+            try:
+                summary_prompt = f"""Summarize the following content neutrally in 2 sentences capturing its central claims/themes and overall tone. Avoid evaluative judgment. Return ONLY JSON: {{\n  \"summary\": \"text\"\n}}\n\nCONTENT:\n{content[:12000]}"""
+                summary_resp = await asyncio.to_thread(client.generate_json, summary_prompt, 55)
+                if summary_resp.get("ok") and isinstance(summary_resp.get("data"), dict):
+                    data = summary_resp.get("data", {})
+                    content_summary = (data.get("summary") or data.get("Summary") or "").strip()
+            except Exception:
+                content_summary = None
+            # Fallback heuristic if model summary failed or empty
+            if not content_summary:
+                import re
+                sentences = re.split(r'[.!?]+\s+', content.strip())
+                content_summary = " ".join(sentences[:2]).strip()[:600]
+
             # Check for cancel
             if cancel_requested.get():
                 print("[ResonanceEngine] Canceled after ingestion")
@@ -528,6 +544,7 @@ TEXT:
                     # Store
                     results_obj = {
                         "content": content,
+                        "content_summary": content_summary,
                         "ingestion": ingestion,
                         "taxonomy": taxonomy_result,
                         "foundations": foundations_result,
@@ -633,6 +650,7 @@ TEXT:
 
             results_obj = {
                 "content": content,
+                "content_summary": content_summary,
                 "ingestion": ingestion,
                 "taxonomy": taxonomy_result,
                 "foundations": foundations_result,
@@ -671,9 +689,16 @@ TEXT:
         foundations = results["foundations"]
         tribes = results["tribes"]
         perf = perf_metrics.get() or {}
+        content_summary = results.get("content_summary") or "(summary unavailable)"
         
         # Build summary cards
         cards = []
+        # Content summary card (placed first)
+        cards.append(ui.div(
+            ui.h4("Content Summary"),
+            ui.p(content_summary),
+            class_="foundation-card"
+        ))
         
         # Reality taxonomy summary
         summary = taxonomy.get("summary", {})
