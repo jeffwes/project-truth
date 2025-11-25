@@ -1,90 +1,60 @@
-# Project Truth — Harari Fact Analyzer
+# The Resonance Engine
 
-This repository contains a small prototype: a Shiny for Python app that
-extracts assertions from text, runs grounded fact-checks using Google's
-Generative AI (Gemini) with optional web grounding, and classifies
-assertions according to Harari's Objective/Subjective/Intersubjective tiers.
+**Version 3.1 (Final Integration)**  
+**Project Name:** The Resonance Engine  
+**AI Engine:** Google Gemini 3.0 Pro  
+**Target Users:** Social Science Researchers & Media Analysts
 
-Quick start (using the project venv):
+## Executive Summary
 
-```bash
-# activate the venv
-source .venv/bin/activate
+The Resonance Engine is a local-first desktop application designed to deconstruct the persuasive architecture of modern media. Unlike standard summarizers that tell you *what* an article says, this tool tells you *how it works*.
 
-# install dependencies
-pip install -r requirements.txt
+It operates as a "second brain" that ingests content from active browser tabs, YouTube videos, or raw text, then uses Gemini 3.0 to:
+1. Separate verifiable reality from shared myths ("inter-subjective" reality)
+2. Map content to specific psychological triggers (Moral Foundations)
+3. Visualize engine data to predict which social "tribes" the content will resonate with
 
-# download spaCy model
-python -m spacy download en_core_web_sm
+## Theoretical Frameworks
 
-# run tests
-pytest -q
+### A. The Reality Taxonomy (Yuval Noah Harari)
 
-# run the app (dev server)
-shiny run --reload app.py
-```
+Based on *Sapiens*, this framework classifies every assertion into:
 
-# Project Truth — Harari Fact Analyzer
+- **Objective Reality**: Phenomena that exist independently of human consciousness
+- **Subjective Reality**: Phenomena that exist only in individual consciousness  
+- **Intersubjective Reality**: Phenomena sustained by shared beliefs
 
-A small prototype Shiny for Python app that:
-- extracts factual assertions from input text (spaCy)
-- runs grounded fact-checks using Google Generative AI (Gemini) with optional web grounding
-- classifies assertions into Harari's tiers (Objective / Intersubjective / Subjective)
+### B. Moral Foundations Theory (Jonathan Haidt)
 
-Quick start (recommended: use the provided virtualenv)
+Six psychological triggers: Care, Fairness, Loyalty, Authority, Sanctity, Liberty
 
-1. Activate the venv and install dependencies
+### C. Tribal Resonance Prediction
 
-```bash
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+Predicts which social/political tribes will find content compelling.
 
-2. Download the spaCy model (only needed once)
+## Installation
 
-```bash
-python -m spacy download en_core_web_sm
-```
+1. Ensure `.env` contains: `GEMINI_API_KEY=your_key`
+2. Install: `pip install -r requirements.txt`
+3. Run: `shiny run app.py`
+4. Open: http://127.0.0.1:8000
 
-3. Create a `.env` (recommended) with your Gemini key
+## Usage
 
-```bash
-printf 'GEMINI_API_KEY="%s"\n' "YOUR_KEY_HERE" > .env
-```
+1. Select input mode (text/URL/YouTube)
+2. Enter content
+3. Click "Analyze Content"
+4. Explore results in tabs
+5. Export as JSON or CSV
 
-4. Run tests
+## Architecture
 
-```bash
-pytest -q
-```
+- `src/gemini_client.py` - API client
+- `src/reality_taxonomy.py` - Harari analysis
+- `src/moral_foundations.py` - MFT analysis
+- `src/tribal_resonance.py` - Audience prediction
+- `app.py` - Shiny UI
 
-5. Run the Shiny dev server (single-process recommended for local API key loading)
+---
 
-```bash
-# from project root
-PYTHONPATH=src .venv/bin/shiny run app.py --host 127.0.0.1 --port 8787
-```
-
-Files of interest
-- `app.py` — Shiny UI and glue to ingestion/analysis
-- `src/data_ingestion.py` — URL scraping and YouTube transcript helpers
-- `src/analysis_engine.py` — `extract_facts`, `check_facts`, `classify_harari`
-- `src/gemini/client.py` — Gemini helper (SDK-first, REST fallback)
-
-Notes & troubleshooting
-- `.env` contains secrets; ensure `.env` is listed in `.gitignore` (it is by default)
-- The app lazy-loads heavy libraries (spaCy) to reduce import-time overhead, but the first request that triggers spaCy may take longer.
-- If the Shiny reloader spawns worker processes that don't see `.env`, start the server without `--reload` so the server process imports `.env` directly.
-- Gemini SDK vs REST: the helper prefers the official SDK when available and will try to enable grounding via the SDK's tool config; REST fallback is included for environments without the SDK.
-
-Security
-- Never commit API keys. If a secret is pushed accidentally, remove it and rotate the key.
-
-Contributing
-- Open an issue or PR on the GitHub repo: https://github.com/jeffwes/project-truth
-
-License
-- Add a license file if you want this project published with a permissive license.
-
-Enjoy! If you'd like, I can add a simple GitHub Actions workflow to run tests on each push.
-
+Version 3.1 | November 25, 2025
