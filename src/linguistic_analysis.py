@@ -68,8 +68,22 @@ Return ONLY valid JSON with this EXACT structure:
     "rhetorical_density_score": 0.0-100.0,
     "net_valence_score": -1.0 to +1.0,
     "classification": "Hit Piece|Manifesto|Dry Report|Balanced Analysis|Advocacy",
-    "dominant_devices": [
-      {{"name": "device name", "count": int, "valence": "positive|negative|neutral", "examples": ["quote"]}}
+    "devices": [
+      {{"name": "Strawman Argument", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "False Dichotomy", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "Ad Hominem", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "Slippery Slope", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "Whataboutism", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "Loaded Language", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "Dog Whistle", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "Proof by Gallup", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "Motte-and-Bailey", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "Anaphora", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "Catastrophizing", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "Appeal to Authority", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "Bandwagon", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "Euphemism/Dysphemism", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}},
+      {{"name": "Epistemic Closure", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote"]}}
     ],
     "signature_interpretation": "brief analysis"
   }}
@@ -99,10 +113,28 @@ ANALYSIS INSTRUCTIONS:
    - Style: Academic (>12), Conversational (6-10), Populist (<8 with simple vocab).
 
 5. PERSUASION SIGNATURE:
-   - Identify rhetorical devices: Ad Hominem, Strawman, Appeal to Authority, Anaphora, 
-     Euphemism, Loaded Language, False Dilemma, Bandwagon, Fear Appeal, etc.
-   - Density = devices per 1000 words.
-   - Valence: negative (attack devices), positive (inspirational), neutral (logical).
+   - Identify these SPECIFIC 15 rhetorical devices with counts and valence:
+     
+     1. STRAWMAN ARGUMENT: Misrepresenting opponent's argument to make it easier to attack (Valence: negative)
+     2. FALSE DICHOTOMY (Binary Thinking): Presenting complex issues as having only two sides (Valence: negative)
+     3. AD HOMINEM (Attacking the Person): Attacking character rather than argument (Valence: negative)
+     4. SLIPPERY SLOPE: Asserting small first step inevitably leads to chain of negative events (Valence: negative)
+     5. WHATABOUTISM: Deflection tactic that attempts to discredit opponent's position by charging hypocrisy (Valence: negative)
+     6. LOADED LANGUAGE (Emotive Diction): Words with strong positive or negative connotations (Valence: can be positive or negative - mark each instance)
+     7. DOG WHISTLE: Coded language that appears normal but communicates specific message to target subgroup (Valence: negative)
+     8. PROOF BY GALLUP (Overwhelming the Reader): Excessive number of arguments to make refutation impossible (Valence: negative)
+     9. MOTTE-AND-BAILEY: Conflating two positions - one modest (the Motte) one controversial (the Bailey) (Valence: negative)
+     10. ANAPHORA: Repetition of word/phrase at beginning of successive clauses for hypnotic/rallying effect (Valence: positive)
+     11. CATASTROPHIZING (Appeal to Fear): Emphasizing negative consequences to induce anxiety/panic (Valence: negative)
+     12. APPEAL TO AUTHORITY (False Authority): Using "expert" opinion when expert not qualified (Valence: can be positive or negative)
+     13. BANDWAGON: Arguing something is right simply because many people believe it (Valence: positive)
+     14. EUPHEMISM / DYSPHEMISM: Mild words masking harsh realities OR harsh words degrading neutral concepts (Valence: positive for euphemism, negative for dysphemism)
+     15. EPISTEMIC CLOSURE: Rhetoric designed to prevent reader from considering outside sources, framing external critique as "fake news" or "enemy propaganda" (Valence: negative)
+   
+   - For EACH device, return: {{"name": "device_name", "count": int, "valence_score": -1.0 to +1.0, "examples": ["quote1", "quote2"]}}
+   - Count ALL 15 devices (use count=0 if not found).
+   - Density = total_device_count / (word_count / 1000).
+   - Net valence = average of all valence_scores weighted by count.
    - Classification based on density + valence quadrant.
 
 TEXT (first 10k chars):
@@ -117,7 +149,7 @@ TEXT (first 10k chars):
                 "polarization_metrics": {"us_vs_them_ratio": 0.0, "ingroup_pronouns": {}, "outgroup_pronouns": {}, "most_used_outgroup_label": None, "polarization_interpretation": "Analysis failed"},
                 "certainty_metrics": {"dogmatism_score": 0, "high_modality_count": 0, "low_modality_count": 0, "dominant_modals": [], "certainty_interpretation": "Analysis failed"},
                 "readability": {"grade_level": 0.0, "avg_sentence_length": 0.0, "lexical_density": 0.0, "style_classification": "Unknown", "complexity_interpretation": "Analysis failed"},
-                "persuasion_signature": {"rhetorical_density_score": 0.0, "net_valence_score": 0.0, "classification": "Unknown", "dominant_devices": [], "signature_interpretation": "Analysis failed"},
+                "persuasion_signature": {"rhetorical_density_score": 0.0, "net_valence_score": 0.0, "classification": "Unknown", "devices": [], "signature_interpretation": "Analysis failed"},
                 "error": result.get("error")
             }
         
@@ -176,7 +208,7 @@ TEXT (first 10k chars):
                     "rhetorical_density_score": float(persuasion.get("rhetorical_density_score", 0.0)),
                     "net_valence_score": float(persuasion.get("net_valence_score", 0.0)),
                     "classification": persuasion.get("classification", "Unknown"),
-                    "dominant_devices": persuasion.get("dominant_devices", [])[:8],
+                    "devices": persuasion.get("devices", []),
                     "signature_interpretation": persuasion.get("signature_interpretation", "")
                 },
                 "error": None
@@ -221,7 +253,7 @@ TEXT (first 10k chars):
                 "rhetorical_density_score": 0.0,
                 "net_valence_score": 0.0,
                 "classification": "Unknown",
-                "dominant_devices": [],
+                "devices": [],
                 "signature_interpretation": "No content to analyze"
             },
             "error": "No content provided"

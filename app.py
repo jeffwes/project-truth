@@ -1323,60 +1323,118 @@ TEXT:
         )
         sections.append(complexity_card)
         
-        # 5. Persuasion Signature (Scatter plot)
+        # 5. Persuasion Signature (Spider/Radar chart with 15 devices)
         persuasion = linguistic.get("persuasion_signature", {})
         density = persuasion.get("rhetorical_density_score", 0.0)
         valence = persuasion.get("net_valence_score", 0.0)
         classification = persuasion.get("classification", "Unknown")
-        devices = persuasion.get("dominant_devices", [])
+        devices = persuasion.get("devices", [])
         pers_interp = persuasion.get("signature_interpretation", "")
         
-        # Scatter plot with single point
-        scatter_data = {
-            "type": "scatter",
-            "mode": "markers+text",
-            "x": [valence],
-            "y": [density],
-            "marker": {"size": 20, "color": "#dc3545" if valence < 0 else "#28a745"},
-            "text": [classification],
-            "textposition": "top center",
-            "textfont": {"size": 12, "color": "#333"}
-        }
-        scatter_layout = {
-            "margin": {"l": 60, "r": 40, "t": 30, "b": 50},
-            "height": 320,
-            "xaxis": {"title": "Valence (Negative ← → Positive)", "range": [-1.2, 1.2], "zeroline": True},
-            "yaxis": {"title": "Rhetorical Density", "range": [0, max(100, density * 1.2)]},
+        # Build spider/radar chart data
+        # Separate into positive and negative traces based on valence_score
+        device_names = []
+        positive_counts = []
+        negative_counts = []
+        
+        for device in devices:
+            name = device.get("name", "Unknown")
+            count = device.get("count", 0)
+            val_score = device.get("valence_score", 0.0)
+            
+            device_names.append(name)
+            # Split into positive/negative for color coding
+            if val_score >= 0:
+                positive_counts.append(count)
+                negative_counts.append(0)
+            else:
+                negative_counts.append(count)
+                positive_counts.append(0)
+        
+        # If no devices, use empty placeholders
+        if not device_names:
+            device_names = ["Strawman", "False Dichotomy", "Ad Hominem", "Slippery Slope", "Whataboutism",
+                           "Loaded Language", "Dog Whistle", "Proof by Gallup", "Motte-and-Bailey", "Anaphora",
+                           "Catastrophizing", "Appeal to Authority", "Bandwagon", "Euphemism/Dysphemism", "Epistemic Closure"]
+            positive_counts = [0] * 15
+            negative_counts = [0] * 15
+        
+        # Radar chart traces (positive in green, negative in red)
+        radar_data = []
+        
+        if any(positive_counts):
+            radar_data.append({
+                "type": "scatterpolar",
+                "r": positive_counts,
+                "theta": device_names,
+                "fill": "toself",
+                "fillcolor": "rgba(40, 167, 69, 0.2)",
+                "line": {"color": "#28a745", "width": 2},
+                "marker": {"color": "#28a745", "size": 6},
+                "name": "Positive Valence"
+            })
+        
+        if any(negative_counts):
+            radar_data.append({
+                "type": "scatterpolar",
+                "r": negative_counts,
+                "theta": device_names,
+                "fill": "toself",
+                "fillcolor": "rgba(220, 53, 69, 0.2)",
+                "line": {"color": "#dc3545", "width": 2},
+                "marker": {"color": "#dc3545", "size": 6},
+                "name": "Negative Valence"
+            })
+        
+        radar_layout = {
+            "polar": {
+                "radialaxis": {"visible": True, "range": [0, max(max(positive_counts + negative_counts, default=1) * 1.2, 5)]}
+            },
+            "margin": {"l": 80, "r": 80, "t": 40, "b": 40},
+            "height": 520,
             "paper_bgcolor": "#f8f9fa",
-            "annotations": [
-                {"x": -0.7, "y": density * 0.9, "text": "Attack", "showarrow": False, "font": {"size": 10, "color": "#999"}},
-                {"x": 0.7, "y": density * 0.9, "text": "Inspire", "showarrow": False, "font": {"size": 10, "color": "#999"}},
-                {"x": 0, "y": 10, "text": "Factual", "showarrow": False, "font": {"size": 10, "color": "#999"}}
-            ]
+            "showlegend": True,
+            "legend": {"x": 0.5, "y": -0.1, "xanchor": "center", "orientation": "h"}
         }
-        scatter_json = _json.dumps({"data": [scatter_data], "layout": scatter_layout})
-        scatter_html = f"""
-        <div id="persuasion_scatter" style="width:100%;height:320px;"></div>
+        
+        radar_json = _json.dumps({"data": radar_data, "layout": radar_layout})
+        radar_html = f"""
+        <div id="persuasion_radar" style="width:100%;height:520px;"></div>
         <script>
           (function(){{
-            var spec = {scatter_json};
-            if (window.Plotly && document.getElementById('persuasion_scatter')) {{
-              Plotly.newPlot('persuasion_scatter', spec.data, spec.layout, {{displayModeBar:false}});
+            var spec = {radar_json};
+            if (window.Plotly && document.getElementById('persuasion_radar')) {{
+              Plotly.newPlot('persuasion_radar', spec.data, spec.layout, {{displayModeBar:false}});
             }}
           }})();
         </script>
         """
         
+        # Build device list with examples
+        device_list_items = []
+        for device in devices:
+            name = device.get("name", "Unknown")
+            count = device.get("count", 0)
+            val_score = device.get("valence_score", 0.0)
+            examples = device.get("examples", [])
+            
+            if count > 0:
+                color = "#28a745" if val_score >= 0 else "#dc3545"
+                device_list_items.append(
+                    ui.tags.li(
+                        ui.tags.span(f"{name}: {count} uses (valence: {val_score:+.2f})", style=f"font-weight:600; color:{color};"),
+                        ui.tags.ul(*[ui.tags.li(f'"{ex}"', style="font-size:0.8em; color:#666; font-style:italic;") for ex in examples[:2]]) if examples else "",
+                        style="margin-bottom:8px;"
+                    )
+                )
+        
         persuasion_card = ui.div(
-            ui.h4("5. Persuasion Signature"),
-            ui.p(f"Density: {density:.1f} devices/1k words | Valence: {valence:+.2f} | Classification: {classification}", style="font-weight:600;"),
-            ui.HTML(scatter_html),
+            ui.h4("5. Persuasion Signature (15 Rhetorical Devices)"),
+            ui.p(f"Density: {density:.1f} devices/1k words | Net Valence: {valence:+.2f} | Classification: {classification}", style="font-weight:600;"),
+            ui.HTML(radar_html),
             ui.p(pers_interp, style="font-size:0.9em; color:#333; margin-top:12px;"),
-            ui.tags.strong("Dominant Rhetorical Devices:", style="font-size:0.9em;"),
-            ui.tags.ul(*[
-                ui.tags.li(f"{d.get('name', 'Unknown')}: {d.get('count', 0)} uses ({d.get('valence', 'neutral')})", style="font-size:0.85em;")
-                for d in devices[:6]
-            ]) if devices else ui.p("No devices detected.", style="font-size:0.85em; color:#666;"),
+            ui.tags.strong("Detected Rhetorical Devices:", style="font-size:0.9em; margin-top:12px; display:block;"),
+            ui.tags.ul(*device_list_items, style="font-size:0.85em;") if device_list_items else ui.p("No devices detected.", style="font-size:0.85em; color:#666;"),
             class_="foundation-card"
         )
         sections.append(persuasion_card)
