@@ -227,6 +227,8 @@ Recency & Reliability Instructions (DO FIRST):
 3. Avoid hallucinating exact figures if not found; set status="unclear" with notes describing attempted search angle.
 4. If multiple conflicting credible sources exist, use status="disputed" and include one supporting and one opposing evidence item.
 5. Reject sources lacking provenance (no publisher/date) or obvious opinion pieces unless noting viewpoint.
+ 6. If initial internal knowledge does NOT yield a source < 90 days, ITERATIVELY simulate web search queries: start with 2-4 high-signal keywords from the assertion (include location or actor names), then refine by adding a timeframe term (e.g., "2025", "recent", last month). Continue until a recent source is found or you exhaust plausible variations. Record the final set of attempted query terms in `notes` if status becomes "unclear" or "disputed".
+ 7. Never backfill dates: if only older sources (>24 months) exist, explicitly state "no recent source located" in `notes`.
 
 Return ONLY a JSON array; no commentary outside JSON.
 
