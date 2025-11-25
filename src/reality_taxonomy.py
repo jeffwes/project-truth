@@ -194,52 +194,231 @@ ASSERTIONS:
         except Exception:
             return [self.classify_assertion(a) for a in assertions]
 
+    def _enrich_objective(self, assertions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        objs = [a for a in assertions if a.get("classification") == "objective"]
+        if not objs:
+            return assertions
+        prompt_payload = [o.get("assertion", "") for o in objs]
+        prompt_json = json.dumps(prompt_payload[:40])  # safety cap
+        prompt = f"""Provide fact-check metadata for EACH objective reality assertion in this JSON array.
+
+For each assertion return an object:
+{{"assertion": original,
+  "fact_check": {{
+    "status": "verified"|"partially_verified"|"disputed"|"unclear",
+    "verification_confidence": 0.0-1.0,
+    "evidence": ["source or paraphrased evidence"],
+    "notes": "brief reasoning inc. limitations",
+    "sources": [{{"title": "source title", "url": "https://...", "date": "YYYY-MM-DD"}}]
+  }}
+}}
+
+Instructions: Use web search / recent knowledge retrieval mentally; prefer sources < 24 months old if possible. If no reliable source found, set status="unclear" and empty sources array. Return ONLY JSON array.
+
+ASSERTIONS:
+{prompt_json}
+"""
+        result = self.client.generate_json(prompt, timeout=80)
+        if not result.get("ok"):
+            # Populate default fact_check structure
+            for o in objs:
+                o["fact_check"] = {
+                    "status": "unclear",
+                    "verification_confidence": 0.0,
+                    "evidence": [],
+                    "notes": result.get("error", "enrichment failed"),
+                    "sources": []
+                }
+            return assertions
+        try:
+            data = result.get("data", [])
+            mapping = {}
+            for item in data:
+                if isinstance(item, dict):
+                    mapping[item.get("assertion", "").strip()] = item
+            for o in objs:
+                key = o.get("assertion", "").strip()
+                enriched = mapping.get(key)
+                if enriched and isinstance(enriched.get("fact_check"), dict):
+                    o["fact_check"] = enriched["fact_check"]
+                else:
+                    o["fact_check"] = {
+                        "status": "unclear",
+                        "verification_confidence": 0.0,
+                        "evidence": [],
+                        "notes": "missing enrichment",
+                        "sources": []
+                    }
+        except Exception as e:
+            for o in objs:
+                o["fact_check"] = {
+                    "status": "unclear",
+                    "verification_confidence": 0.0,
+                    "evidence": [],
+                    "notes": f"parse error: {str(e)}",
+                    "sources": []
+                }
+        return assertions
+
+    def _enrich_intersubjective(self, assertions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        inters = [a for a in assertions if a.get("classification") == "intersubjective"]
+        if not inters:
+            return assertions
+        payload = [i.get("assertion", "") for i in inters]
+        prompt_json = json.dumps(payload[:50])
+        prompt = f"""Analyze EACH intersubjective assertion for stability and myth taxonomy.
+
+Return ONLY a JSON array of objects like:
+{{"assertion": original,
+  "stability_index": {{"status": "naturalized"|"contested"|"ambiguous", "cues": ["phrase"], "reasoning": "brief"}},
+  "myth_taxonomy": {{"category": "tribal_national"|"legal_bureaucratic"|"economic"|"divine_ideological"|"other", "confidence": 0.0-1.0, "reasoning": "brief"}}
+}}
+
+Guidance:
+- naturalized: framed as permanent, unquestioned ("is", institutional declaratives).
+- contested: language signalling challenge / fragility ("being questioned", "under attack").
+- ambiguous: insufficient linguistic cues.
+
+ASSERTIONS:
+{prompt_json}
+"""
+        result = self.client.generate_json(prompt, timeout=70)
+        if not result.get("ok"):
+            for i in inters:
+                i["stability_index"] = {"status": "ambiguous", "cues": [], "reasoning": result.get("error", "enrichment failed")}
+                i["myth_taxonomy"] = {"category": "other", "confidence": 0.0, "reasoning": result.get("error", "enrichment failed")}
+            return assertions
+        try:
+            data = result.get("data", [])
+            mapping = {}
+            for item in data:
+                if isinstance(item, dict):
+                    mapping[item.get("assertion", "").strip()] = item
+            for i in inters:
+                key = i.get("assertion", "").strip()
+                enriched = mapping.get(key)
+                if enriched:
+                    i["stability_index"] = enriched.get("stability_index", {"status": "ambiguous", "cues": [], "reasoning": "missing"})
+                    i["myth_taxonomy"] = enriched.get("myth_taxonomy", {"category": "other", "confidence": 0.0, "reasoning": "missing"})
+                else:
+                    i["stability_index"] = {"status": "ambiguous", "cues": [], "reasoning": "not returned"}
+                    i["myth_taxonomy"] = {"category": "other", "confidence": 0.0, "reasoning": "not returned"}
+        except Exception as e:
+            for i in inters:
+                i["stability_index"] = {"status": "ambiguous", "cues": [], "reasoning": f"parse error: {str(e)}"}
+                i["myth_taxonomy"] = {"category": "other", "confidence": 0.0, "reasoning": f"parse error: {str(e)}"}
+        return assertions
+
+    def _enrich_subjective(self, assertions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        subs = [a for a in assertions if a.get("classification") == "subjective"]
+        if not subs:
+            return assertions
+        payload = [s.get("assertion", "") for s in subs]
+        prompt_json = json.dumps(payload[:50])
+        prompt = f"""For EACH subjective assertion provide viral arousal and empathy span metrics.
+
+Return ONLY a JSON array of objects:
+{{"assertion": original,
+  "viral_arousal": {{"category": "high"|"low"|"neutral", "emotion_tags": ["anger"], "arousal_score": 0.0-1.0, "rationale": "brief"}},
+  "empathy_span": {{"sides_described": ["group"], "focus_bias": "one_sided"|"balanced"|"unclear", "entities_with_emotion": int, "notes": "brief"}}
+}}
+
+Emotion guidance: high -> anger,awe,anxiety,excitement,fear,hope; low -> sadness,contentment; neutral -> descriptive/no strong affect.
+
+ASSERTIONS:
+{prompt_json}
+"""
+        result = self.client.generate_json(prompt, timeout=70)
+        if not result.get("ok"):
+            for s in subs:
+                s["viral_arousal"] = {"category": "neutral", "emotion_tags": [], "arousal_score": 0.0, "rationale": result.get("error", "enrichment failed")}
+                s["empathy_span"] = {"sides_described": [], "focus_bias": "unclear", "entities_with_emotion": 0, "notes": result.get("error", "enrichment failed")}
+            return assertions
+        try:
+            data = result.get("data", [])
+            mapping = {}
+            for item in data:
+                if isinstance(item, dict):
+                    mapping[item.get("assertion", "").strip()] = item
+            for s in subs:
+                key = s.get("assertion", "").strip()
+                enriched = mapping.get(key)
+                if enriched:
+                    s["viral_arousal"] = enriched.get("viral_arousal", {"category": "neutral", "emotion_tags": [], "arousal_score": 0.0, "rationale": "missing"})
+                    s["empathy_span"] = enriched.get("empathy_span", {"sides_described": [], "focus_bias": "unclear", "entities_with_emotion": 0, "notes": "missing"})
+                else:
+                    s["viral_arousal"] = {"category": "neutral", "emotion_tags": [], "arousal_score": 0.0, "rationale": "not returned"}
+                    s["empathy_span"] = {"sides_described": [], "focus_bias": "unclear", "entities_with_emotion": 0, "notes": "not returned"}
+        except Exception as e:
+            for s in subs:
+                s["viral_arousal"] = {"category": "neutral", "emotion_tags": [], "arousal_score": 0.0, "rationale": f"parse error: {str(e)}"}
+                s["empathy_span"] = {"sides_described": [], "focus_bias": "unclear", "entities_with_emotion": 0, "notes": f"parse error: {str(e)}"}
+        return assertions
+
+    def _compute_enrichment_summaries(self, assertions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        fact = {"verified": 0, "partially_verified": 0, "disputed": 0, "unclear": 0}
+        stab = {"naturalized": 0, "contested": 0, "ambiguous": 0}
+        myth = {"tribal_national": 0, "legal_bureaucratic": 0, "economic": 0, "divine_ideological": 0, "other": 0}
+        arousal = {"high": 0, "low": 0, "neutral": 0}
+        empathy = {"one_sided": 0, "balanced": 0, "unclear": 0}
+        for a in assertions:
+            fc = a.get("fact_check") or {}
+            fact_status = fc.get("status")
+            if fact_status in fact:
+                fact[fact_status] += 1
+            si = a.get("stability_index") or {}
+            st = si.get("status")
+            if st in stab:
+                stab[st] += 1
+            mt = a.get("myth_taxonomy") or {}
+            cat = mt.get("category")
+            if cat in myth:
+                myth[cat] += 1
+            va = a.get("viral_arousal") or {}
+            acat = va.get("category")
+            if acat in arousal:
+                arousal[acat] += 1
+            es = a.get("empathy_span") or {}
+            bias = es.get("focus_bias")
+            if bias in empathy:
+                empathy[bias] += 1
+        return {
+            "fact_check_summary": fact,
+            "stability_summary": stab,
+            "myth_summary": myth,
+            "arousal_summary": arousal,
+            "empathy_summary": empathy
+        }
+
     def analyze_content(self, content: str, max_assertions: int = 10, quick_mode: bool = False) -> Dict[str, Any]:
-        """
-        Full pipeline: Extract assertions and classify each one.
-        
-        Args:
-            content: Text content to analyze
-            max_assertions: Maximum assertions to extract
-            
-        Returns:
-            Dict with 'assertions' list and 'summary' statistics
-        """
-        # Extract assertions
+        """Full pipeline with optional enrichment (skipped in quick mode)."""
         assertions = self.extract_assertions(content, max_assertions)
-        
         if not assertions:
             return {
                 "assertions": [],
-                "summary": {
-                    "total": 0,
-                    "objective": 0,
-                    "subjective": 0,
-                    "intersubjective": 0,
-                    "unknown": 0
-                },
+                "summary": {"total": 0, "objective": 0, "subjective": 0, "intersubjective": 0, "unknown": 0},
                 "error": "No assertions extracted from content"
             }
-        
-        # Decide classification strategy
         if quick_mode:
-            # In quick mode: reduce assertions for speed and batch classify
             assertions = assertions[: min(len(assertions), max_assertions, 8)]
-            classified = self.classify_batch(assertions)
-        else:
-            # Use batch classification first; if fallback occurred, still acceptable
-            classified = self.classify_batch(assertions)
-
+        classified = self.classify_batch(assertions)
+        # Basic summary
         summary = {"objective": 0, "subjective": 0, "intersubjective": 0, "unknown": 0}
         for result in classified:
-            classification = result.get("classification", "unknown")
-            summary[classification] = summary.get(classification, 0) + 1
-        
+            summary[result.get("classification", "unknown")] = summary.get(result.get("classification", "unknown"), 0) + 1
         summary["total"] = len(classified)
-        
+        # Enrichment only in deep mode
+        if not quick_mode:
+            classified = self._enrich_objective(classified)
+            classified = self._enrich_intersubjective(classified)
+            classified = self._enrich_subjective(classified)
+            enrich_summary = self._compute_enrichment_summaries(classified)
+        else:
+            enrich_summary = {}
         return {
             "assertions": classified,
             "summary": summary,
+            **enrich_summary,
             "error": None
         }
 
