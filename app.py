@@ -762,28 +762,68 @@ TEXT:
                     reasoning = item.get("reasoning", "")
                     confidence = item.get("confidence", 0.0)
                     
-                    # Additional enrichment details
-                    extras = []
-                    fc = item.get("fact_check") if classification == "objective" else None
-                    if fc:
-                        extras.append(ui.tags.small(f"Fact: {fc.get('status','unclear').title()} (conf {fc.get('verification_confidence',0.0):.0%})"))
-                        if fc.get('sources'):
-                            extras.append(ui.tags.small("Sources: " + ", ".join([s.get('title','') for s in fc.get('sources',[])[:2]])))
-                    if classification == "intersubjective":
+                    # Additional enrichment details per class
+                    details_children = [
+                        ui.tags.small(f"Confidence: {confidence:.1%} | {reasoning}")
+                    ]
+
+                    if class_type == "objective":
+                        fc = item.get("fact_check") or {}
+                        if fc:
+                            details_children.append(ui.tags.small(f"Fact-Check: {fc.get('status','unclear').title()} (conf {fc.get('verification_confidence',0.0):.0%})"))
+                            ev = fc.get('evidence') or []
+                            if ev:
+                                details_children.append(ui.tags.small("Evidence: ") )
+                                details_children.append(ui.tags.ul(*[ui.tags.li(e) for e in ev[:3]]))
+                            srcs = fc.get('sources') or []
+                            if srcs:
+                                link_items = []
+                                for s in srcs[:3]:
+                                    title = s.get('title') or s.get('url','Source')
+                                    url = s.get('url') or '#'
+                                    link_items.append(ui.tags.li(ui.tags.a(title, href=url, target="_blank")))
+                                details_children.append(ui.tags.small("Sources:"))
+                                details_children.append(ui.tags.ul(*link_items))
+                            notes = fc.get('notes')
+                            if notes:
+                                details_children.append(ui.tags.small(f"Notes: {notes}"))
+
+                    elif class_type == "intersubjective":
                         si = item.get("stability_index") or {}
                         mt = item.get("myth_taxonomy") or {}
-                        extras.append(ui.tags.small(f"Stability: {si.get('status','ambiguous').title()}"))
-                        extras.append(ui.tags.small(f"Myth: {mt.get('category','other').replace('_',' ').title()} ({mt.get('confidence',0.0):.0%})"))
-                    if classification == "subjective":
+                        details_children.append(ui.tags.small(f"Stability: {si.get('status','ambiguous').title()}"))
+                        cues = si.get('cues') or []
+                        if cues:
+                            details_children.append(ui.tags.small("Cues:"))
+                            details_children.append(ui.tags.ul(*[ui.tags.li(c) for c in cues[:4]]))
+                        details_children.append(ui.tags.small(
+                            f"Myth: {mt.get('category','other').replace('_',' ').title()} ({mt.get('confidence',0.0):.0%})"
+                        ))
+                        mtreason = mt.get('reasoning')
+                        if mtreason:
+                            details_children.append(ui.tags.small(f"Myth Rationale: {mtreason}"))
+
+                    elif class_type == "subjective":
                         va = item.get("viral_arousal") or {}
                         es = item.get("empathy_span") or {}
-                        extras.append(ui.tags.small(f"Arousal: {va.get('category','neutral').title()} ({va.get('arousal_score',0.0):.0%})"))
-                        extras.append(ui.tags.small(f"Empathy: {es.get('focus_bias','unclear').replace('_',' ').title()}"))
+                        details_children.append(ui.tags.small(f"Arousal: {va.get('category','neutral').title()} ({va.get('arousal_score',0.0):.0%})"))
+                        etags = va.get('emotion_tags') or []
+                        if etags:
+                            details_children.append(ui.tags.small("Emotions:"))
+                            details_children.append(ui.tags.ul(*[ui.tags.li(t) for t in etags[:5]]))
+                        details_children.append(ui.tags.small(f"Empathy: {es.get('focus_bias','unclear').replace('_',' ').title()}"))
+                        sides = es.get('sides_described') or []
+                        if sides:
+                            details_children.append(ui.tags.small("Sides described:"))
+                            details_children.append(ui.tags.ul(*[ui.tags.li(s) for s in sides[:5]]))
+                        ents = es.get('entities_with_emotion')
+                        if isinstance(ents, int):
+                            details_children.append(ui.tags.small(f"Entities with emotion: {ents}"))
+
                     section_items.append(ui.div(
                         ui.tags.strong(assertion),
                         ui.br(),
-                        ui.tags.small(f"Confidence: {confidence:.1%} | {reasoning}"),
-                        *extras,
+                        *details_children,
                         style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;"
                     ))
                 
@@ -793,10 +833,22 @@ TEXT:
                     style="margin: 20px 0;"
                 ))
         
-        # Add disclaimer if deep enrichment present
-        if taxonomy.get("fact_check_summary"):
+        # Add disclaimer / mode hint
+        # Show enrichment disclaimer if any enriched fields present; otherwise hint that deep mode provides more detail
+        has_enrichment = any(
+            any(
+                itm.get('fact_check') or itm.get('stability_index') or itm.get('myth_taxonomy') or itm.get('viral_arousal') or itm.get('empathy_span')
+                for itm in grouped[k]
+            ) for k in grouped
+        )
+        if has_enrichment:
             sections.insert(0, ui.div(
-                ui.p("Enriched metrics (fact-check, stability, arousal, empathy) generated by LLM heuristics. Verify critical information independently.", style="font-size:0.75em; color:#666;"),
+                ui.p("Enriched metrics (fact-check, stability, arousal, empathy) are LLM-assisted. Verify sources independently.", style="font-size:0.75em; color:#666;"),
+                style="margin-bottom:12px;"
+            ))
+        else:
+            sections.insert(0, ui.div(
+                ui.p("Tip: Switch to Deep mode to see fact-check, stability, myth taxonomy, arousal, and empathy details.", style="font-size:0.75em; color:#666;"),
                 style="margin-bottom:12px;"
             ))
         return ui.div(*sections)
