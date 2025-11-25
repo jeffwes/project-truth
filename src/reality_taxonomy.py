@@ -1,5 +1,6 @@
 """Reality Taxonomy Analyzer - Classifies assertions using Harari's framework."""
 import json
+from datetime import date
 from typing import List, Dict, Any
 from src.gemini_client import GeminiClient
 
@@ -200,20 +201,34 @@ ASSERTIONS:
             return assertions
         prompt_payload = [o.get("assertion", "") for o in objs]
         prompt_json = json.dumps(prompt_payload[:40])  # safety cap
-        prompt = f"""Provide fact-check metadata for EACH objective reality assertion in this JSON array.
+        current_date = date.today().isoformat()
+        prompt = f"""Provide STRICT, up-to-date fact-check metadata for EACH objective reality assertion in this JSON array.
+
+CURRENT_DATE: {current_date}
+
+Temporal Resolution:
+- Resolve relative time phrases ("today", "yesterday", "Tuesday", "last week") to concrete ISO dates based on CURRENT_DATE.
+- If the assertion references a recent event (breaking news), prioritize sources published AFTER the referenced event date.
 
 For each assertion return an object:
 {{"assertion": original,
-  "fact_check": {{
-    "status": "verified"|"partially_verified"|"disputed"|"unclear",
-    "verification_confidence": 0.0-1.0,
-    "evidence": ["source or paraphrased evidence"],
-    "notes": "brief reasoning inc. limitations",
-    "sources": [{{"title": "source title", "url": "https://...", "date": "YYYY-MM-DD"}}]
-  }}
+    "fact_check": {{
+        "status": "verified"|"partially_verified"|"disputed"|"unclear",
+        "verification_confidence": 0.0-1.0,
+        "evidence": ["concise paraphrase of strongest supporting or refuting evidence"],
+        "notes": "method + temporal resolution + any uncertainty; list search terms if unclear",
+        "sources": [{{"title": "source title", "url": "https://...", "date": "YYYY-MM-DD"}}]
+    }}
 }}
 
-Instructions: Use web search / recent knowledge retrieval mentally; prefer sources < 24 months old if possible. If no reliable source found, set status="unclear" and empty sources array. Return ONLY JSON array.
+Recency & Reliability Instructions (DO FIRST):
+1. PRIORITIZE live/current information: conceptually simulate performing a web search BEFORE using internal knowledge.
+2. Prefer sources < 90 days old for breaking events; if none found, use the most authoritative recent source (< 24 months) and mark older items explicitly.
+3. Avoid hallucinating exact figures if not found; set status="unclear" with notes describing attempted search angle.
+4. If multiple conflicting credible sources exist, use status="disputed" and include one supporting and one opposing evidence item.
+5. Reject sources lacking provenance (no publisher/date) or obvious opinion pieces unless noting viewpoint.
+
+Return ONLY a JSON array; no commentary outside JSON.
 
 ASSERTIONS:
 {prompt_json}
