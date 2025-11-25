@@ -129,14 +129,6 @@ app_ui = ui.page_fluid(
                     ui.output_ui("overview_ui"),
                 )
             ),
-            ui.nav_panel(
-                "Visualizations",
-                ui.div(
-                    ui.h3("Visual Analytics"),
-                    ui.p("Charts summarizing taxonomy and related signals."),
-                    ui.output_ui("viz_ui"),
-                )
-            ),
             
             ui.nav_panel(
                 "Reality Taxonomy",
@@ -768,21 +760,22 @@ TEXT:
             ))
 
         return ui.div(*cards)
-
-    # Visualizations (Sankey for Reality Taxonomy breakdown)
+    
+    # Reality Taxonomy UI
     @output
     @render.ui
-    def viz_ui():
+    def taxonomy_ui():
         results = analysis_results.get()
         if not results:
-            return ui.p("No analysis yet. Run an analysis to see charts.")
-
-        taxonomy = results.get("taxonomy") or {}
+            return ui.p("No analysis available.")
+        
+        taxonomy = results["taxonomy"]
         assertions = taxonomy.get("assertions", [])
+        
         if not assertions:
-            return ui.p("No assertions available for visualization.")
-
-        # Build nodes and links for Sankey
+            return ui.p("No assertions extracted.")
+        
+        # Build Sankey chart at top
         import json as _json
         labels = []
         index = {}
@@ -818,7 +811,6 @@ TEXT:
         # Intersubjective -> Stability -> Myth
         stability_keys = ["naturalized", "contested", "ambiguous"]
         myth_keys = ["tribal_national", "legal_bureaucratic", "economic", "divine_ideological", "other"]
-        # Joint counts
         joint_st_myth = {s: {m: 0 for m in myth_keys} for s in stability_keys}
         st_totals = {s: 0 for s in stability_keys}
         for a in assertions:
@@ -880,23 +872,19 @@ TEXT:
                     targets.append(e_node)
                     values.append(c)
 
-        # If there are no links (e.g., quick mode without enrichment), guide the user
-        if not values:
-            return ui.div(
-                ui.p("No enrichment available for Sankey. Switch to Deep mode to populate fact-check, stability, myth, arousal, and empathy data."),
-                class_="foundation-card"
-            )
-
-        sankey_data = {
-            "type": "sankey",
-            "orientation": "h",
-            "node": {"label": labels, "pad": 15, "thickness": 20},
-            "link": {"source": sources, "target": targets, "value": values}
-        }
-        layout = {"margin": {"l": 10, "r": 10, "t": 10, "b": 10}, "paper_bgcolor": "#ffffff"}
-        fig_json = _json.dumps({"data": [sankey_data], "layout": layout})
-        return ui.HTML(f"""
-            <div id=\"sankey_rt\" style=\"width:100%;height:520px;\"></div>
+        # Build Sankey chart UI component
+        sankey_html = ""
+        if values:
+            sankey_data = {
+                "type": "sankey",
+                "orientation": "h",
+                "node": {"label": labels, "pad": 15, "thickness": 20},
+                "link": {"source": sources, "target": targets, "value": values}
+            }
+            layout = {"margin": {"l": 10, "r": 10, "t": 10, "b": 10}, "paper_bgcolor": "#ffffff"}
+            fig_json = _json.dumps({"data": [sankey_data], "layout": layout})
+            sankey_html = f"""
+            <div id="sankey_rt" style="width:100%;height:520px;margin-bottom:24px;"></div>
             <script>
               (function(){{
                 var spec = {fig_json};
@@ -905,21 +893,7 @@ TEXT:
                 }}
               }})();
             </script>
-        """)
-    
-    # Reality Taxonomy UI
-    @output
-    @render.ui
-    def taxonomy_ui():
-        results = analysis_results.get()
-        if not results:
-            return ui.p("No analysis available.")
-        
-        taxonomy = results["taxonomy"]
-        assertions = taxonomy.get("assertions", [])
-        
-        if not assertions:
-            return ui.p("No assertions extracted.")
+        """
         
         # Group by classification
         grouped = {"objective": [], "subjective": [], "intersubjective": [], "unknown": []}
@@ -1034,6 +1008,11 @@ TEXT:
                 ui.p("Tip: Switch to Deep mode to see fact-check, stability, myth taxonomy, arousal, and empathy details.", style="font-size:0.75em; color:#666;"),
                 style="margin-bottom:12px;"
             ))
+        
+        # Prepend Sankey chart if available
+        if sankey_html:
+            sections.insert(0, ui.HTML(sankey_html))
+        
         return ui.div(*sections)
     
     # Moral Foundations UI
