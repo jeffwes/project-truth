@@ -62,6 +62,9 @@ app_ui = ui.page_fluid(
             @keyframes spin { to { transform: rotate(360deg); } }
             .loading-msg { font-size:1.1em; color:#333; }
         """)
+        ,
+        # Plotly for visualizations
+        ui.tags.script(src="https://cdn.plot.ly/plotly-2.35.2.min.js")
     ),
     
     ui.panel_title("The Resonance Engine", "Deconstruct Persuasive Media"),
@@ -124,6 +127,14 @@ app_ui = ui.page_fluid(
                 ui.div(
                     ui.h3("Analysis Summary"),
                     ui.output_ui("overview_ui"),
+                )
+            ),
+            ui.nav_panel(
+                "Visualizations",
+                ui.div(
+                    ui.h3("Visual Analytics"),
+                    ui.p("Charts summarizing taxonomy and related signals."),
+                    ui.output_ui("viz_ui"),
                 )
             ),
             
@@ -757,6 +768,144 @@ TEXT:
             ))
 
         return ui.div(*cards)
+
+    # Visualizations (Sankey for Reality Taxonomy breakdown)
+    @output
+    @render.ui
+    def viz_ui():
+        results = analysis_results.get()
+        if not results:
+            return ui.p("No analysis yet. Run an analysis to see charts.")
+
+        taxonomy = results.get("taxonomy") or {}
+        assertions = taxonomy.get("assertions", [])
+        if not assertions:
+            return ui.p("No assertions available for visualization.")
+
+        # Build nodes and links for Sankey
+        import json as _json
+        labels = []
+        index = {}
+        def idx(label: str) -> int:
+            if label not in index:
+                index[label] = len(labels)
+                labels.append(label)
+            return index[label]
+
+        sources = []
+        targets = []
+        values = []
+
+        # Top-level nodes
+        n_obj = idx("Objective")
+        n_inter = idx("Intersubjective")
+        n_subj = idx("Subjective")
+
+        # Objective -> Fact-check statuses
+        fact_counts = {"verified": 0, "partially_verified": 0, "disputed": 0, "unclear": 0}
+        for a in assertions:
+            if a.get("classification") == "objective":
+                fc = (a.get("fact_check") or {}).get("status")
+                if fc in fact_counts:
+                    fact_counts[fc] += 1
+        for k, v in fact_counts.items():
+            if v > 0:
+                child = idx(f"Fact: {k.replace('_',' ').title()}")
+                sources.append(n_obj)
+                targets.append(child)
+                values.append(v)
+
+        # Intersubjective -> Stability -> Myth
+        stability_keys = ["naturalized", "contested", "ambiguous"]
+        myth_keys = ["tribal_national", "legal_bureaucratic", "economic", "divine_ideological", "other"]
+        # Joint counts
+        joint_st_myth = {s: {m: 0 for m in myth_keys} for s in stability_keys}
+        st_totals = {s: 0 for s in stability_keys}
+        for a in assertions:
+            if a.get("classification") == "intersubjective":
+                si = (a.get("stability_index") or {}).get("status")
+                mt = (a.get("myth_taxonomy") or {}).get("category")
+                if si in stability_keys:
+                    st_totals[si] += 1
+                    if mt in myth_keys:
+                        joint_st_myth[si][mt] += 1
+        st_nodes = {}
+        for s, count in st_totals.items():
+            if count > 0:
+                st_node = idx(f"Stability: {s.title()}")
+                st_nodes[s] = st_node
+                sources.append(n_inter)
+                targets.append(st_node)
+                values.append(count)
+        for s, myth_map in joint_st_myth.items():
+            s_node = st_nodes.get(s)
+            if s_node is None:
+                continue
+            for m, c in myth_map.items():
+                if c > 0:
+                    m_node = idx(f"Myth: {m.replace('_',' ').title()}")
+                    sources.append(s_node)
+                    targets.append(m_node)
+                    values.append(c)
+
+        # Subjective -> Arousal -> Empathy
+        arousal_keys = ["high", "neutral", "low"]
+        empathy_keys = ["one_sided", "balanced", "unclear"]
+        joint_ar_emp = {a: {e: 0 for e in empathy_keys} for a in arousal_keys}
+        ar_totals = {a: 0 for a in arousal_keys}
+        for a in assertions:
+            if a.get("classification") == "subjective":
+                va = (a.get("viral_arousal") or {}).get("category")
+                es = (a.get("empathy_span") or {}).get("focus_bias")
+                if va in arousal_keys:
+                    ar_totals[va] += 1
+                    if es in empathy_keys:
+                        joint_ar_emp[va][es] += 1
+        ar_nodes = {}
+        for a_key, count in ar_totals.items():
+            if count > 0:
+                a_node = idx(f"Arousal: {a_key.title()}")
+                ar_nodes[a_key] = a_node
+                sources.append(n_subj)
+                targets.append(a_node)
+                values.append(count)
+        for a_key, emp_map in joint_ar_emp.items():
+            a_node = ar_nodes.get(a_key)
+            if a_node is None:
+                continue
+            for e_key, c in emp_map.items():
+                if c > 0:
+                    e_node = idx(f"Empathy: {e_key.replace('_',' ').title()}")
+                    sources.append(a_node)
+                    targets.append(e_node)
+                    values.append(c)
+
+        # If there are no links (e.g., quick mode without enrichment), guide the user
+        if not values:
+            return ui.div(
+                ui.p("No enrichment available for Sankey. Switch to Deep mode to populate fact-check, stability, myth, arousal, and empathy data."),
+                class_="foundation-card"
+            )
+
+        sankey_data = {
+            "type": "sankey",
+            "orientation": "h",
+            "node": {"label": labels, "pad": 15, "thickness": 20},
+            "link": {"source": sources, "target": targets, "value": values}
+        }
+        layout = {"margin": {"l": 10, "r": 10, "t": 10, "b": 10}, "paper_bgcolor": "#ffffff"}
+        fig_json = _json.dumps({"data": [sankey_data], "layout": layout})
+        return ui.HTML(f"""
+            <div id=\"sankey_rt\" style=\"width:100%;height:520px;\"></div>
+            <script>
+              (function(){{
+                var spec = {fig_json};
+                if (window.Plotly && document.getElementById('sankey_rt')) {{
+                  Plotly.newPlot('sankey_rt', spec.data, spec.layout, {{displayModeBar:false}});
+                }}
+              }})();
+            </script>
+        """)
     
     # Reality Taxonomy UI
     @output
