@@ -677,11 +677,6 @@ TEXT:
         
         # Reality taxonomy summary
         summary = taxonomy.get("summary", {})
-        fact_summary = taxonomy.get("fact_check_summary")
-        stability_summary = taxonomy.get("stability_summary")
-        myth_summary = taxonomy.get("myth_summary")
-        arousal_summary = taxonomy.get("arousal_summary")
-        empathy_summary = taxonomy.get("empathy_summary")
         if summary:
             total = summary.get("total", 0)
             obj = summary.get("objective", 0)
@@ -699,57 +694,7 @@ TEXT:
                 class_="foundation-card"
             ))
 
-        # Fact check summary (deep mode only)
-        if fact_summary:
-            ftotal = sum(fact_summary.values()) or 1
-            cards.append(ui.div(
-                ui.h4("Objective Fact-Check Status"),
-                ui.tags.ul(
-                    ui.tags.li(f"Verified: {fact_summary.get('verified',0)} ({fact_summary.get('verified',0)/ftotal*100:.0f}%)"),
-                    ui.tags.li(f"Partially: {fact_summary.get('partially_verified',0)} ({fact_summary.get('partially_verified',0)/ftotal*100:.0f}%)"),
-                    ui.tags.li(f"Disputed: {fact_summary.get('disputed',0)} ({fact_summary.get('disputed',0)/ftotal*100:.0f}%)"),
-                    ui.tags.li(f"Unclear: {fact_summary.get('unclear',0)} ({fact_summary.get('unclear',0)/ftotal*100:.0f}%)")
-                ),
-                ui.p("LLM-assisted fact check – always verify sources manually.", style="font-size:0.75em; color:#666;"),
-                class_="foundation-card"
-            ))
-
-        if stability_summary or myth_summary:
-            cards.append(ui.div(
-                ui.h4("Shared Fiction Dynamics"),
-                ui.tags.ul(
-                    ui.tags.li(f"Naturalized: {stability_summary.get('naturalized',0)}" if stability_summary else ""),
-                    ui.tags.li(f"Contested: {stability_summary.get('contested',0)}" if stability_summary else ""),
-                    ui.tags.li(f"Ambiguous: {stability_summary.get('ambiguous',0)}" if stability_summary else "")
-                ) if stability_summary else ui.HTML(""),
-                ui.p("Myth Categories:"),
-                ui.tags.ul(*[
-                    ui.tags.li(f"{k.replace('_',' ').title()}: {v}") for k,v in (myth_summary or {}).items()
-                ]) if myth_summary else ui.HTML(""),
-                class_="foundation-card"
-            ))
-
-        if arousal_summary or empathy_summary:
-            high = (arousal_summary or {}).get('high',0)
-            low = (arousal_summary or {}).get('low',0)
-            neutral = (arousal_summary or {}).get('neutral',0)
-            total_arousal = high+low+neutral or 1
-            virality_index = high/total_arousal
-            balanced = (empathy_summary or {}).get('balanced',0)
-            one_sided = (empathy_summary or {}).get('one_sided',0)
-            total_emp = balanced + one_sided + (empathy_summary or {}).get('unclear',0) or 1
-            empathy_ratio = balanced/total_emp
-            cards.append(ui.div(
-                ui.h4("Subjective Dynamics"),
-                ui.p(f"Virality Index (High Arousal Share): {virality_index*100:.0f}%"),
-                ui.tags.ul(
-                    ui.tags.li(f"High: {high}"),
-                    ui.tags.li(f"Low: {low}"),
-                    ui.tags.li(f"Neutral: {neutral}")
-                ),
-                ui.p(f"Empathy Balance: {empathy_ratio*100:.0f}% balanced"),
-                class_="foundation-card"
-            ))
+        # Note: additional enrichment summaries are intentionally omitted from Overview per request.
         
         # Moral foundations summary
         profile = foundations.get("overall_profile", "")
