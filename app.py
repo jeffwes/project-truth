@@ -761,70 +761,79 @@ TEXT:
                     assertion = item.get("assertion", "")
                     reasoning = item.get("reasoning", "")
                     confidence = item.get("confidence", 0.0)
-                    
-                    # Additional enrichment details per class
-                    details_children = [
-                        ui.tags.small(f"Confidence: {confidence:.1%} | {reasoning}")
-                    ]
+                    # Stack each metadata block in its own div for clean formatting
+                    meta_blocks = []
+                    meta_blocks.append(ui.div(ui.tags.small(f"Confidence: {confidence:.1%}")))
+                    if reasoning:
+                        meta_blocks.append(ui.div(ui.tags.small(reasoning)))
 
                     if class_type == "objective":
                         fc = item.get("fact_check") or {}
-                        if fc:
-                            details_children.append(ui.tags.small(f"Fact-Check: {fc.get('status','unclear').title()} (conf {fc.get('verification_confidence',0.0):.0%})"))
-                            ev = fc.get('evidence') or []
-                            if ev:
-                                details_children.append(ui.tags.small("Evidence: ") )
-                                details_children.append(ui.tags.ul(*[ui.tags.li(e) for e in ev[:3]]))
-                            srcs = fc.get('sources') or []
-                            if srcs:
-                                link_items = []
-                                for s in srcs[:3]:
-                                    title = s.get('title') or s.get('url','Source')
-                                    url = s.get('url') or '#'
-                                    link_items.append(ui.tags.li(ui.tags.a(title, href=url, target="_blank")))
-                                details_children.append(ui.tags.small("Sources:"))
-                                details_children.append(ui.tags.ul(*link_items))
-                            notes = fc.get('notes')
-                            if notes:
-                                details_children.append(ui.tags.small(f"Notes: {notes}"))
+                        status = fc.get('status')
+                        if status:
+                            meta_blocks.append(ui.div(ui.tags.small(f"Fact-Check Status: {status.title()} (conf {fc.get('verification_confidence',0.0):.0%})")))
+                        ev = fc.get('evidence') or []
+                        if ev:
+                            meta_blocks.append(ui.div(
+                                ui.tags.small("Evidence:"),
+                                ui.tags.ul(*[ui.tags.li(e) for e in ev[:3]])
+                            ))
+                        srcs = fc.get('sources') or []
+                        if srcs:
+                            meta_blocks.append(ui.div(
+                                ui.tags.small("Sources:"),
+                                ui.tags.ul(*[ui.tags.li(ui.tags.a((s.get('title') or s.get('url','Source')), href=(s.get('url') or '#'), target="_blank")) for s in srcs[:3]])
+                            ))
+                        notes = fc.get('notes')
+                        if notes:
+                            meta_blocks.append(ui.div(ui.tags.small(f"Notes: {notes}")))
 
                     elif class_type == "intersubjective":
                         si = item.get("stability_index") or {}
                         mt = item.get("myth_taxonomy") or {}
-                        details_children.append(ui.tags.small(f"Stability: {si.get('status','ambiguous').title()}"))
+                        meta_blocks.append(ui.div(ui.tags.small(f"Stability: {si.get('status','ambiguous').title()}")))
+                        si_reason = si.get('reasoning')
+                        if si_reason:
+                            meta_blocks.append(ui.div(ui.tags.small(f"Stability Rationale: {si_reason}")))
                         cues = si.get('cues') or []
                         if cues:
-                            details_children.append(ui.tags.small("Cues:"))
-                            details_children.append(ui.tags.ul(*[ui.tags.li(c) for c in cues[:4]]))
-                        details_children.append(ui.tags.small(
-                            f"Myth: {mt.get('category','other').replace('_',' ').title()} ({mt.get('confidence',0.0):.0%})"
-                        ))
-                        mtreason = mt.get('reasoning')
-                        if mtreason:
-                            details_children.append(ui.tags.small(f"Myth Rationale: {mtreason}"))
+                            meta_blocks.append(ui.div(
+                                ui.tags.small("Stability Cues:"),
+                                ui.tags.ul(*[ui.tags.li(c) for c in cues[:6]])
+                            ))
+                        mt_cat = mt.get('category')
+                        if mt_cat:
+                            meta_blocks.append(ui.div(ui.tags.small(f"Myth: {mt_cat.replace('_',' ').title()} ({mt.get('confidence',0.0):.0%})")))
+                        mt_reason = mt.get('reasoning')
+                        if mt_reason:
+                            meta_blocks.append(ui.div(ui.tags.small(f"Myth Rationale: {mt_reason}")))
 
                     elif class_type == "subjective":
                         va = item.get("viral_arousal") or {}
                         es = item.get("empathy_span") or {}
-                        details_children.append(ui.tags.small(f"Arousal: {va.get('category','neutral').title()} ({va.get('arousal_score',0.0):.0%})"))
+                        meta_blocks.append(ui.div(ui.tags.small(f"Arousal: {va.get('category','neutral').title()} ({va.get('arousal_score',0.0):.0%})")))
                         etags = va.get('emotion_tags') or []
                         if etags:
-                            details_children.append(ui.tags.small("Emotions:"))
-                            details_children.append(ui.tags.ul(*[ui.tags.li(t) for t in etags[:5]]))
-                        details_children.append(ui.tags.small(f"Empathy: {es.get('focus_bias','unclear').replace('_',' ').title()}"))
+                            meta_blocks.append(ui.div(
+                                ui.tags.small("Emotion Tags:"),
+                                ui.tags.ul(*[ui.tags.li(t) for t in etags[:6]])
+                            ))
+                        meta_blocks.append(ui.div(ui.tags.small(f"Empathy Bias: {es.get('focus_bias','unclear').replace('_',' ').title()}")))
                         sides = es.get('sides_described') or []
                         if sides:
-                            details_children.append(ui.tags.small("Sides described:"))
-                            details_children.append(ui.tags.ul(*[ui.tags.li(s) for s in sides[:5]]))
+                            meta_blocks.append(ui.div(
+                                ui.tags.small("Sides Described:"),
+                                ui.tags.ul(*[ui.tags.li(s) for s in sides[:6]])
+                            ))
                         ents = es.get('entities_with_emotion')
                         if isinstance(ents, int):
-                            details_children.append(ui.tags.small(f"Entities with emotion: {ents}"))
+                            meta_blocks.append(ui.div(ui.tags.small(f"Entities With Emotion: {ents}")))
 
                     section_items.append(ui.div(
                         ui.tags.strong(assertion),
                         ui.br(),
-                        *details_children,
-                        style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;"
+                        *meta_blocks,
+                        style="margin: 12px 0; padding: 14px; background: #f8f9fa; border-radius: 6px;"
                     ))
                 
                 sections.append(ui.div(
