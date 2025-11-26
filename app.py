@@ -855,90 +855,91 @@ TEXT:
                 sb_values.append(value)
                 # Custom tooltip logic
                 if parent == "Objective":
-                    # Show count only for fact nodes
-                    sb_customdata.append(f"Count: {value}")
+                    # Show actual facts for fact nodes
+                    facts = []
+                    for a in assertions:
+                        if a.get("classification") == "objective":
+                            fc = (a.get("fact_check") or {}).get("status")
+                            fact_label = f"Fact: {fc.replace('_',' ').title()}" if fc else ""
+                            if fact_label == label:
+                                assertion_text = a.get("assertion", "")
+                                if assertion_text:
+                                    facts.append(assertion_text)
+                    sb_customdata.append("\n\n".join(facts) if facts else f"Count: {value}")
                 elif label.startswith("Empathy"):
-                    # Show empathy bias details
-                    sides = []
-                    entities = []
+                    # Show each assertion with empathy bias details
+                    items = []
                     for a in assertions:
                         if a.get("classification") == "subjective":
                             es = (a.get("empathy_span") or {})
                             if es.get("focus_bias") and label.endswith(es.get("focus_bias").replace('_',' ').title()):
-                                sides += es.get("sides_described", [])
-                                ent = es.get("entities_with_emotion")
-                                if ent:
-                                    entities.append(str(ent))
-                    tip = ""
-                    if sides:
-                        tip += "Sides: " + ", ".join(sides)
-                    if entities:
-                        tip += "\nEntities: " + ", ".join(entities)
-                    sb_customdata.append(tip or label)
+                                assertion_text = a.get("assertion", "")
+                                sides = es.get("sides_described", [])
+                                entities = es.get("entities_with_emotion")
+                                item_parts = [assertion_text]
+                                if sides:
+                                    item_parts.append(f"  Sides: {', '.join(sides)}")
+                                if entities:
+                                    item_parts.append(f"  Entities: {entities}")
+                                items.append("\n".join(item_parts))
+                    sb_customdata.append("\n\n".join(items) if items else label)
                 elif label.startswith("Arousal"):
-                    # Show arousal details
-                    scores = []
-                    tags = []
+                    # Show each assertion with arousal details
+                    items = []
                     for a in assertions:
                         if a.get("classification") == "subjective":
                             va = (a.get("viral_arousal") or {})
                             if va.get("category") and label.endswith(va.get("category").title()):
+                                assertion_text = a.get("assertion", "")
                                 score = va.get("arousal_score")
+                                tags = va.get("emotion_tags", [])
+                                item_parts = [assertion_text]
                                 if score is not None:
-                                    scores.append(f"{va.get('category').title()} {int(score*100)}%")
-                                tags += va.get("emotion_tags", [])
-                    tip = ""
-                    if scores:
-                        tip += ", ".join(scores)
-                    if tags:
-                        tip += "\nTags: " + ", ".join(tags)
-                    sb_customdata.append(tip or label)
+                                    item_parts.append(f"  Arousal Score: {int(score*100)}%")
+                                if tags:
+                                    item_parts.append(f"  Emotion Tags: {', '.join(tags)}")
+                                items.append("\n".join(item_parts))
+                    sb_customdata.append("\n\n".join(items) if items else label)
                 elif label.startswith("Stability"):
-                    # Show stability details
-                    statuses = []
-                    cues = []
-                    reasons = []
+                    # Show each assertion with stability details
+                    items = []
                     for a in assertions:
                         if a.get("classification") == "intersubjective":
                             si = (a.get("stability_index") or {})
                             if si.get("status") and label.endswith(si.get("status").title()):
-                                statuses.append(si.get("status"))
-                                cues += si.get("cues", [])
-                                reason = si.get("reasoning")
-                                if reason:
-                                    reasons.append(reason)
-                    tip = ""
-                    if statuses:
-                        tip += "Status: " + ", ".join(statuses)
-                    if cues:
-                        tip += "\nCues: " + ", ".join(cues)
-                    if reasons:
-                        tip += "\nReasoning: " + " | ".join(reasons)
-                    sb_customdata.append(tip or label)
+                                assertion_text = a.get("assertion", "")
+                                status = si.get("status")
+                                cues = si.get("cues", [])
+                                reasoning = si.get("reasoning")
+                                item_parts = [assertion_text]
+                                if status:
+                                    item_parts.append(f"  Status: {status}")
+                                if cues:
+                                    item_parts.append(f"  Cues: {', '.join(cues)}")
+                                if reasoning:
+                                    item_parts.append(f"  Reasoning: {reasoning}")
+                                items.append("\n".join(item_parts))
+                    sb_customdata.append("\n\n".join(items) if items else label)
                 elif label.startswith("Myth"):
-                    # Show myth details
-                    categories = []
-                    confidences = []
-                    reasons = []
+                    # Show each assertion with myth details
+                    items = []
                     for a in assertions:
                         if a.get("classification") == "intersubjective":
                             mt = (a.get("myth_taxonomy") or {})
                             if mt.get("category") and label.endswith(mt.get("category").replace('_',' ').title()):
-                                categories.append(mt.get("category"))
-                                conf = mt.get("confidence")
-                                if conf is not None:
-                                    confidences.append(f"{int(conf*100)}%")
-                                reason = mt.get("reasoning")
-                                if reason:
-                                    reasons.append(reason)
-                    tip = ""
-                    if categories:
-                        tip += "Category: " + ", ".join(categories)
-                    if confidences:
-                        tip += "\nConfidence: " + ", ".join(confidences)
-                    if reasons:
-                        tip += "\nReasoning: " + " | ".join(reasons)
-                    sb_customdata.append(tip or label)
+                                assertion_text = a.get("assertion", "")
+                                category = mt.get("category")
+                                confidence = mt.get("confidence")
+                                reasoning = mt.get("reasoning")
+                                item_parts = [assertion_text]
+                                if category:
+                                    item_parts.append(f"  Category: {category}")
+                                if confidence is not None:
+                                    item_parts.append(f"  Confidence: {int(confidence*100)}%")
+                                if reasoning:
+                                    item_parts.append(f"  Reasoning: {reasoning}")
+                                items.append("\n".join(item_parts))
+                    sb_customdata.append("\n\n".join(items) if items else label)
                 else:
                     examples = node_examples.get(examples_key or label, [])
                     sb_customdata.append("\n".join(examples) or label)
@@ -1030,85 +1031,91 @@ TEXT:
                 sb2_values.append(value)
                 # Custom tooltip logic for second chart
                 if parent == "Objective":
-                    sb2_customdata.append(f"Count: {value}")
+                    # Show actual facts for fact nodes
+                    facts = []
+                    for a in assertions:
+                        if a.get("classification") == "objective":
+                            fc = (a.get("fact_check") or {}).get("status")
+                            fact_label = f"Fact: {fc.replace('_',' ').title()}" if fc else ""
+                            if fact_label == label:
+                                assertion_text = a.get("assertion", "")
+                                if assertion_text:
+                                    facts.append(assertion_text)
+                    sb2_customdata.append("\n\n".join(facts) if facts else f"Count: {value}")
                 elif label.startswith("Empathy Bias"):
-                    sides = []
-                    entities = []
+                    # Show each assertion with empathy bias details
+                    items = []
                     for a in assertions:
                         if a.get("classification") == "subjective":
                             es = (a.get("empathy_span") or {})
                             if es.get("focus_bias") and label.endswith(es.get("focus_bias").replace('_',' ').title()):
-                                sides += es.get("sides_described", [])
-                                ent = es.get("entities_with_emotion")
-                                if ent:
-                                    entities.append(str(ent))
-                    tip = ""
-                    if sides:
-                        tip += "Sides: " + ", ".join(sides)
-                    if entities:
-                        tip += "\nEntities: " + ", ".join(entities)
-                    sb2_customdata.append(tip or label)
+                                assertion_text = a.get("assertion", "")
+                                sides = es.get("sides_described", [])
+                                entities = es.get("entities_with_emotion")
+                                item_parts = [assertion_text]
+                                if sides:
+                                    item_parts.append(f"  Sides: {', '.join(sides)}")
+                                if entities:
+                                    item_parts.append(f"  Entities: {entities}")
+                                items.append("\n".join(item_parts))
+                    sb2_customdata.append("\n\n".join(items) if items else label)
                 elif label.startswith("Arousal"):
-                    scores = []
-                    tags = []
+                    # Show each assertion with arousal details
+                    items = []
                     for a in assertions:
                         if a.get("classification") == "subjective":
                             va = (a.get("viral_arousal") or {})
                             if va.get("category") and label.endswith(va.get("category").title()):
+                                assertion_text = a.get("assertion", "")
                                 score = va.get("arousal_score")
+                                tags = va.get("emotion_tags", [])
+                                item_parts = [assertion_text]
                                 if score is not None:
-                                    scores.append(f"{va.get('category').title()} {int(score*100)}%")
-                                tags += va.get("emotion_tags", [])
-                    tip = ""
-                    if scores:
-                        tip += ", ".join(scores)
-                    if tags:
-                        tip += "\nTags: " + ", ".join(tags)
-                    sb2_customdata.append(tip or label)
+                                    item_parts.append(f"  Arousal Score: {int(score*100)}%")
+                                if tags:
+                                    item_parts.append(f"  Emotion Tags: {', '.join(tags)}")
+                                items.append("\n".join(item_parts))
+                    sb2_customdata.append("\n\n".join(items) if items else label)
                 elif label.startswith("Stability"):
-                    statuses = []
-                    cues = []
-                    reasons = []
+                    # Show each assertion with stability details
+                    items = []
                     for a in assertions:
                         if a.get("classification") == "intersubjective":
                             si = (a.get("stability_index") or {})
                             if si.get("status") and label.endswith(si.get("status").title()):
-                                statuses.append(si.get("status"))
-                                cues += si.get("cues", [])
-                                reason = si.get("reasoning")
-                                if reason:
-                                    reasons.append(reason)
-                    tip = ""
-                    if statuses:
-                        tip += "Status: " + ", ".join(statuses)
-                    if cues:
-                        tip += "\nCues: " + ", ".join(cues)
-                    if reasons:
-                        tip += "\nReasoning: " + " | ".join(reasons)
-                    sb2_customdata.append(tip or label)
+                                assertion_text = a.get("assertion", "")
+                                status = si.get("status")
+                                cues = si.get("cues", [])
+                                reasoning = si.get("reasoning")
+                                item_parts = [assertion_text]
+                                if status:
+                                    item_parts.append(f"  Status: {status}")
+                                if cues:
+                                    item_parts.append(f"  Cues: {', '.join(cues)}")
+                                if reasoning:
+                                    item_parts.append(f"  Reasoning: {reasoning}")
+                                items.append("\n".join(item_parts))
+                    sb2_customdata.append("\n\n".join(items) if items else label)
                 elif label.startswith("Myth"):
-                    categories = []
-                    confidences = []
-                    reasons = []
+                    # Show each assertion with myth details
+                    items = []
                     for a in assertions:
                         if a.get("classification") == "intersubjective":
                             mt = (a.get("myth_taxonomy") or {})
                             if mt.get("category") and label.endswith(mt.get("category").replace('_',' ').title()):
-                                categories.append(mt.get("category"))
-                                conf = mt.get("confidence")
-                                if conf is not None:
-                                    confidences.append(f"{int(conf*100)}%")
-                                reason = mt.get("reasoning")
-                                if reason:
-                                    reasons.append(reason)
-                    tip = ""
-                    if categories:
-                        tip += "Category: " + ", ".join(categories)
-                    if confidences:
-                        tip += "\nConfidence: " + ", ".join(confidences)
-                    if reasons:
-                        tip += "\nReasoning: " + " | ".join(reasons)
-                    sb2_customdata.append(tip or label)
+                                assertion_text = a.get("assertion", "")
+                                category = mt.get("category")
+                                confidence = mt.get("confidence")
+                                reasoning = mt.get("reasoning")
+                                item_parts = [assertion_text]
+                                if category:
+                                    item_parts.append(f"  Category: {category}")
+                                if confidence is not None:
+                                    item_parts.append(f"  Confidence: {int(confidence*100)}%")
+                                if reasoning:
+                                    item_parts.append(f"  Reasoning: {reasoning}")
+                                items.append("\n".join(item_parts))
+                    sb2_customdata.append("\n\n".join(items) if items else label)
                 else:
                     examples = node_examples.get(examples_key or label, [])
                     sb2_customdata.append("\n".join(examples) or label)
