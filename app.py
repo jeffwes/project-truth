@@ -58,10 +58,10 @@ app_ui = ui.page_fluid(
         ),
         ui.navset_tab(
             ui.nav_panel("Overview", ui.div(ui.h3("Analysis Summary"), ui.output_ui("overview_ui"))),
-            ui.nav_panel("Reality Taxonomy", ui.div(ui.h3("Harari's Reality Classification"), ui.p("Classification by reality type."), ui.output_ui("taxonomy_ui"))),
-            ui.nav_panel("Moral Foundations", ui.div(ui.h3("Moral Foundations (Haidt)"), ui.output_ui("foundations_ui"))),
-            ui.nav_panel("Tribal Resonance", ui.div(ui.h3("Predicted Social Tribe Resonance"), ui.output_ui("tribes_ui"))),
-            ui.nav_panel("Linguistic Analysis", ui.div(ui.h3("Linguistic Forensics"), ui.output_ui("linguistic_ui"))),
+            ui.nav_panel("Reality Taxonomy", ui.div(ui.h3("Harari's Reality Classification"), ui.p("Classification by reality type. Detailed description of the theory and categories can be found at the bottom of this page."), ui.output_ui("taxonomy_ui"))),
+            ui.nav_panel("Moral Foundations", ui.div(ui.h3("Moral Foundations (Haidt)"), ui.p("Detailed description of the theory and foundations can be found at the bottom of this page."), ui.output_ui("foundations_ui"))),
+            ui.nav_panel("Tribal Resonance", ui.div(ui.h3("Predicted Social Tribe Resonance"), ui.p("Detailed description of the theory and tribes can be found at the bottom of this page."), ui.output_ui("tribes_ui"))),
+            ui.nav_panel("Linguistic Analysis", ui.div(ui.h3("Linguistic Forensics"), ui.p("Detailed description of the framework and dimensions can be found at the bottom of this page."), ui.output_ui("linguistic_ui"))),
             ui.nav_panel("Export", ui.div(
                 ui.h3("Export Analysis"),
                 ui.download_button("download_json", "Download JSON", class_="btn-success"), ui.br(), ui.br(),
@@ -1354,6 +1354,85 @@ TEXT:
             """
             sections.insert(0, ui.HTML(chart_row))
         
+        # Add framework description at the bottom
+        framework_description = ui.div(
+            ui.tags.hr(style="margin: 40px 0 30px 0; border-top: 2px solid #ccc;"),
+            ui.h3("Harari's Reality Classification Framework", style="margin-top: 30px;"),
+            
+            ui.h4("Core Principles", style="margin-top: 20px;"),
+            ui.p("Yuval Noah Harari's framework categorizes assertions about reality into three fundamental tiers based on their dependence on human consciousness and agreement:"),
+            
+            ui.tags.strong("1. Objective Reality"),
+            ui.p("Exists independently of human beliefs or consciousness. Facts remain true regardless of what anyone thinks. Example: \"The Earth orbits the Sun\" is objectively verifiable through physical observation."),
+            
+            ui.tags.strong("2. Subjective Reality"),
+            ui.p("Exists within individual consciousness and varies from person to person. These are personal feelings, sensations, and emotional experiences. Example: \"I feel anxious about climate change\" reflects an individual's internal state."),
+            
+            ui.tags.strong("3. Intersubjective Reality"),
+            ui.p("Exists in the shared imagination and collective beliefs of groups. These \"social facts\" only exist because many people believe in them and act accordingly. Example: \"Money has value\" is true only because we collectively agree it is."),
+            
+            ui.tags.hr(style="margin: 30px 0;"),
+            
+            ui.h4("Objective Reality Sub-Categories"),
+            ui.tags.strong("Fact-Check Status"),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Verified:"), " Claims supported by strong empirical evidence and expert consensus"),
+                ui.tags.li(ui.tags.strong("Disputed:"), " Claims with conflicting evidence or significant expert disagreement"),
+                ui.tags.li(ui.tags.strong("Unclear:"), " Claims lacking sufficient evidence for verification or refutation"),
+                ui.tags.li(ui.tags.strong("Partially Verified:"), " Claims with some supporting evidence but important caveats or limitations")
+            ),
+            ui.p(ui.tags.em("Indicates: The empirical reliability and evidential support for factual claims"), style="font-style: italic; color: #555;"),
+            
+            ui.tags.hr(style="margin: 30px 0;"),
+            
+            ui.h4("Subjective Reality Sub-Categories"),
+            ui.h5("Viral Arousal (Emotional Intensity)", style="margin-top: 15px;"),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("High:"), " Content evoking strong emotions (anger, fear, outrage, excitement)"),
+                ui.tags.li(ui.tags.strong("Neutral:"), " Content with minimal emotional charge"),
+                ui.tags.li(ui.tags.strong("Low:"), " Content evoking mild or subdued emotional response")
+            ),
+            ui.p(ui.tags.em("Indicates: The emotional energy and potential for content to spread through emotional contagion"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("Empathy Span (Perspective Bias)", style="margin-top: 15px;"),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("One-sided:"), " Narrative focuses on emotions/experiences of a single group or perspective"),
+                ui.tags.li(ui.tags.strong("Balanced:"), " Narrative acknowledges multiple perspectives with emotional consideration"),
+                ui.tags.li(ui.tags.strong("Unclear:"), " Difficult to determine whose experiences are centered")
+            ),
+            ui.p(ui.tags.em("Indicates: Which groups' subjective experiences are represented and validated in the narrative"), style="font-style: italic; color: #555;"),
+            
+            ui.tags.hr(style="margin: 30px 0;"),
+            
+            ui.h4("Intersubjective Reality Sub-Categories"),
+            ui.h5("Stability Index (Social Consensus)", style="margin-top: 15px;"),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Naturalized:"), " Beliefs so deeply embedded they appear as objective facts; invisible and unquestioned"),
+                ui.tags.li(ui.tags.strong("Contested:"), " Beliefs under active challenge with competing narratives and power struggles"),
+                ui.tags.li(ui.tags.strong("Ambiguous:"), " Beliefs in flux with unclear boundaries or mixed acceptance")
+            ),
+            ui.p(ui.tags.em("Indicates: How firmly a shared belief is anchored in collective consciousness and its resistance to change"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("Myth Taxonomy (Social Institution Type)", style="margin-top: 15px;"),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Tribal/National:"), " Identity-based narratives (ethnicity, nationality, heritage)"),
+                ui.tags.li(ui.tags.strong("Legal/Bureaucratic:"), " Rules, laws, rights, and organizational structures"),
+                ui.tags.li(ui.tags.strong("Economic:"), " Money, markets, corporations, and financial systems"),
+                ui.tags.li(ui.tags.strong("Divine/Ideological:"), " Religious beliefs, political ideologies, and moral frameworks"),
+                ui.tags.li(ui.tags.strong("Other:"), " Myths not fitting primary categories")
+            ),
+            ui.p(ui.tags.em("Indicates: Which type of imagined order gives structure and meaning to the shared reality"), style="font-style: italic; color: #555;"),
+            
+            ui.tags.hr(style="margin: 30px 0;"),
+            
+            ui.h4("Key Insight"),
+            ui.p("The framework reveals that much of what humans consider \"real\" exists only through collective agreement. While objective facts can be empirically tested, intersubjective realities—despite being \"imagined\"—have enormous power to shape behavior, institutions, and history. Understanding which tier a claim belongs to helps evaluate evidence standards, recognize whose perspectives are centered, and identify the social forces maintaining or challenging shared beliefs."),
+            
+            style="margin: 30px 0; padding: 30px; background: #f9f9f9; border-radius: 8px; border: 1px solid #ddd;"
+        )
+        
+        sections.append(framework_description)
+        
         return ui.div(*sections)
     
     # Moral Foundations UI
@@ -1405,7 +1484,93 @@ TEXT:
                     class_="foundation-card"
                 ))
         
-        return ui.div(*foundation_cards) if foundation_cards else ui.p("No significant moral foundations triggered.")
+        
+        theory_description = ui.div(
+            ui.tags.hr(style="margin: 40px 0 30px 0; border-top: 2px solid #ccc;"),
+            ui.h3("Moral Foundations Theory (Jonathan Haidt)", style="margin-top: 30px;"),
+            
+            ui.h4("Core Principles", style="margin-top: 20px;"),
+            ui.p("Moral Foundations Theory, developed by psychologist Jonathan Haidt and colleagues, proposes that human moral reasoning is built upon six innate psychological foundations. These foundations are universal across cultures but are prioritized differently by individuals and groups, explaining diverse moral perspectives and political ideologies."),
+            ui.p(ui.tags.strong("Key Insight:"), " Morality is not purely rational but rooted in intuitive emotional responses. Different people and cultures \"build\" different moral systems by emphasizing different foundations, like cooks using the same ingredients in different proportions."),
+            
+            ui.tags.hr(style="margin: 30px 0;"),
+            
+            ui.h4("The Six Moral Foundations"),
+            
+            ui.h5("1. Care/Harm", style="margin-top: 20px;"),
+            ui.p(ui.tags.strong("Core Concern:"), " Protection from cruelty and suffering; nurturing and compassion"),
+            ui.p(ui.tags.strong("Triggered by:"), " Violence, suffering, or distress; vulnerable individuals (children, animals, victims); stories of pain or protection"),
+            ui.p(ui.tags.strong("Valence:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Positive:"), " Empathy, kindness, caregiving, mercy"),
+                ui.tags.li(ui.tags.strong("Negative:"), " Cruelty, neglect, harm, indifference to suffering")
+            ),
+            ui.p(ui.tags.em("Political Pattern: Emphasized strongly by liberals/progressives; moderately by conservatives"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("2. Fairness/Cheating", style="margin-top: 20px;"),
+            ui.p(ui.tags.strong("Core Concern:"), " Justice, reciprocity, and proportional treatment"),
+            ui.p(ui.tags.strong("Triggered by:"), " Unequal treatment or outcomes; rule-breaking, exploitation, or free-riding; issues of rights, justice, and equality"),
+            ui.p(ui.tags.strong("Valence:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Positive:"), " Fair dealing, reciprocity, justice, equity"),
+                ui.tags.li(ui.tags.strong("Negative:"), " Cheating, exploitation, injustice, unfair advantage")
+            ),
+            ui.p(ui.tags.em("Political Pattern: Valued across the spectrum but interpreted differently—progressives emphasize equality; conservatives emphasize proportionality"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("3. Loyalty/Betrayal", style="margin-top: 20px;"),
+            ui.p(ui.tags.strong("Core Concern:"), " Group cohesion, patriotism, and solidarity"),
+            ui.p(ui.tags.strong("Triggered by:"), " Threats to the in-group; acts of loyalty or betrayal; national, tribal, or team identity"),
+            ui.p(ui.tags.strong("Valence:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Positive:"), " Patriotism, solidarity, team spirit, sacrifice for the group"),
+                ui.tags.li(ui.tags.strong("Negative:"), " Betrayal, disloyalty, treason, selfish individualism")
+            ),
+            ui.p(ui.tags.em("Political Pattern: Emphasized more by conservatives; less central to liberal morality"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("4. Authority/Subversion", style="margin-top: 20px;"),
+            ui.p(ui.tags.strong("Core Concern:"), " Respect for hierarchy, tradition, and legitimate leadership"),
+            ui.p(ui.tags.strong("Triggered by:"), " Challenges to authority or tradition; issues of obedience, respect, and social order; hierarchical relationships"),
+            ui.p(ui.tags.strong("Valence:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Positive:"), " Respect, deference, obedience, duty, order"),
+                ui.tags.li(ui.tags.strong("Negative:"), " Disobedience, disrespect, rebellion, chaos")
+            ),
+            ui.p(ui.tags.em("Political Pattern: Emphasized more by conservatives; progressives prioritize equality over hierarchy"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("5. Sanctity/Degradation", style="margin-top: 20px;"),
+            ui.p(ui.tags.strong("Core Concern:"), " Purity, sacredness, and elevation vs. contamination and disgust"),
+            ui.p(ui.tags.strong("Triggered by:"), " Violations of sacred values or bodily purity; disgust reactions (physical or moral); religious or spiritual themes"),
+            ui.p(ui.tags.strong("Valence:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Positive:"), " Purity, sanctity, temperance, cleanliness, divine connection"),
+                ui.tags.li(ui.tags.strong("Negative:"), " Degradation, contamination, desecration, disgust")
+            ),
+            ui.p(ui.tags.em("Political Pattern: Strongly emphasized by religious conservatives; less salient for secular liberals (though progressives may apply it to environmental or bodily autonomy issues)"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("6. Liberty/Oppression", style="margin-top: 20px;"),
+            ui.p(ui.tags.strong("Core Concern:"), " Freedom from domination and tyranny"),
+            ui.p(ui.tags.strong("Triggered by:"), " Bullying, authoritarianism, or illegitimate control; restrictions on autonomy or expression; power imbalances and coercion"),
+            ui.p(ui.tags.strong("Valence:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Positive:"), " Freedom, autonomy, resistance to tyranny"),
+                ui.tags.li(ui.tags.strong("Negative:"), " Oppression, domination, bullying, coercion")
+            ),
+            ui.p(ui.tags.em("Political Pattern: Valued across the spectrum but differently—progressives resist corporate/hierarchical power; libertarians/conservatives resist government overreach"), style="font-style: italic; color: #555;"),
+            
+            ui.tags.hr(style="margin: 30px 0;"),
+            
+            ui.h4("Understanding Moral Profiles"),
+            ui.p(ui.tags.strong("Intensity:"), " How strongly a foundation is triggered (0.0 = not present, 1.0 = maximum)"),
+            ui.p(ui.tags.strong("Valence:"), " Whether the content appeals to the positive virtue (care, fairness, loyalty) or condemns its violation (harm, cheating, betrayal)"),
+            ui.p(ui.tags.strong("Moral Signature:"), " The overall pattern of which foundations are activated reveals the content's moral \"flavor\" and predicts which audiences will find it compelling or repellent."),
+            ui.p(ui.tags.strong("Application:"), " This framework helps explain why people with different moral profiles talk past each other—they're literally speaking different moral languages, prioritizing different foundations as most important."),
+            
+            style="margin: 30px 0; padding: 30px; background: #f9f9f9; border-radius: 8px; border: 1px solid #ddd;"
+        )
+        
+        result_content = ui.div(*foundation_cards) if foundation_cards else ui.p("No significant moral foundations triggered.")
+        
+        return ui.div(result_content, theory_description)
     
     # Tribal Resonance UI
     @output
@@ -1462,7 +1627,115 @@ TEXT:
                 class_="foundation-card"
             ))
         
-        return ui.div(*tribe_cards)
+        
+        theory_description = ui.div(
+            ui.tags.hr(style="margin: 40px 0 30px 0; border-top: 2px solid #ccc;"),
+            ui.h3("Tribal Resonance Theory", style="margin-top: 30px;"),
+            
+            ui.h4("Core Principles", style="margin-top: 20px;"),
+            ui.p("Tribal Resonance Theory examines how content appeals to specific social identity groups—\"tribes\"—based on shared values, worldviews, and cultural narratives. This framework recognizes that humans are tribal creatures who form strong in-group identities around political ideologies, cultural values, economic philosophies, and social movements."),
+            ui.p(ui.tags.strong("Key Insight:"), " Content doesn't just convey information; it signals tribal membership and values. Messages that resonate with a tribe's core beliefs, grievances, and aspirations will be amplified within that community, while messages threatening the tribe's identity will be rejected or attacked."),
+            
+            ui.tags.hr(style="margin: 30px 0;"),
+            
+            ui.h4("Understanding Tribal Resonance"),
+            
+            ui.h5("Resonance Score", style="margin-top: 15px;"),
+            ui.p(ui.tags.strong("Definition:"), " A measure (0.0 to 1.0) of how strongly content aligns with and appeals to a specific tribe's worldview, values, and emotional triggers."),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("High Resonance (0.7+):"), " Content deeply validates the tribe's beliefs, uses their language, addresses their concerns, and reinforces their identity. Likely to be shared enthusiastically within the tribe."),
+                ui.tags.li(ui.tags.strong("Medium Resonance (0.4-0.7):"), " Content touches on tribal themes but may have mixed messages or lack emotional intensity."),
+                ui.tags.li(ui.tags.strong("Low Resonance (0.0-0.4):"), " Content is neutral, irrelevant, or misaligned with tribal values.")
+            ),
+            
+            ui.h5("Sentiment", style="margin-top: 15px;"),
+            ui.p(ui.tags.strong("Definition:"), " Whether the content portrays the tribe positively, negatively, or neutrally."),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Positive:"), " Content celebrates, defends, or validates the tribe's values and identity. Appeals to tribal pride and solidarity."),
+                ui.tags.li(ui.tags.strong("Negative:"), " Content criticizes, threatens, or mocks the tribe. May trigger defensive reactions or outrage."),
+                ui.tags.li(ui.tags.strong("Neutral:"), " Content acknowledges the tribe without strong positive or negative framing.")
+            ),
+            
+            ui.h5("Hooks", style="margin-top: 15px;"),
+            ui.p(ui.tags.strong("Definition:"), " Specific narrative elements, phrases, values, or emotional triggers in the content that connect with the tribe's core concerns."),
+            ui.p(ui.tags.strong("Examples:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Progressive Left:"), " Social justice, systemic inequality, climate crisis, corporate power, marginalized voices"),
+                ui.tags.li(ui.tags.strong("MAGA Conservative:"), " America First, deep state, media bias, traditional values under attack, economic nationalism"),
+                ui.tags.li(ui.tags.strong("Libertarian:"), " Government overreach, individual freedom, free markets, personal responsibility, civil liberties"),
+                ui.tags.li(ui.tags.strong("Religious Conservative:"), " Moral decline, religious freedom, family values, sanctity of life, biblical principles")
+            ),
+            ui.p(ui.tags.strong("Function:"), " Hooks are the \"entry points\" that make content feel relevant and emotionally resonant to a tribe. They signal \"this content speaks to US and OUR concerns.\""),
+            
+            ui.tags.hr(style="margin: 30px 0;"),
+            
+            ui.h4("Major Political/Cultural Tribes"),
+            
+            ui.h5("Progressive Left", style="margin-top: 15px;"),
+            ui.p(ui.tags.strong("Core Values:"), " Social justice, equity, environmental protection, systemic change, intersectionality, collective action"),
+            ui.p(ui.tags.strong("Key Concerns:"), " Systemic racism, climate change, wealth inequality, corporate power, LGBTQ+ rights, reproductive rights"),
+            ui.p(ui.tags.em("Narrative Style: Emphasizes structural oppression, marginalized voices, and the need for transformative policy"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("MAGA Conservative", style="margin-top: 15px;"),
+            ui.p(ui.tags.strong("Core Values:"), " American nationalism, traditional culture, anti-establishment, populist economics, strong borders"),
+            ui.p(ui.tags.strong("Key Concerns:"), " Immigration, cultural change, \"deep state\" elites, media bias, economic decline in rural/working-class communities"),
+            ui.p(ui.tags.em("Narrative Style: Us vs. elite establishment; nostalgia for traditional America; distrust of mainstream institutions"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("Establishment Conservative", style="margin-top: 15px;"),
+            ui.p(ui.tags.strong("Core Values:"), " Free markets, limited government, rule of law, institutional stability, personal responsibility"),
+            ui.p(ui.tags.strong("Key Concerns:"), " Government overreach, fiscal responsibility, constitutional order, meritocracy, law and order"),
+            ui.p(ui.tags.em("Narrative Style: Appeals to tradition, incremental change, respect for institutions, and market solutions"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("Libertarian", style="margin-top: 15px;"),
+            ui.p(ui.tags.strong("Core Values:"), " Individual liberty, minimal government, free markets, personal autonomy, non-aggression principle"),
+            ui.p(ui.tags.strong("Key Concerns:"), " Government tyranny, taxation, regulation, civil liberties, privacy, self-determination"),
+            ui.p(ui.tags.em("Narrative Style: Freedom vs. coercion; skepticism of all authority; emphasis on voluntary cooperation"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("Religious Conservative", style="margin-top: 15px;"),
+            ui.p(ui.tags.strong("Core Values:"), " Traditional morality, religious freedom, sanctity of life, family values, biblical authority"),
+            ui.p(ui.tags.strong("Key Concerns:"), " Abortion, religious liberty, secular culture, marriage, moral education, religious expression in public life"),
+            ui.p(ui.tags.em("Narrative Style: Moral absolutes, sacred vs. profane, defense of faith, spiritual warfare"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("Centrist/Moderate", style="margin-top: 15px;"),
+            ui.p(ui.tags.strong("Core Values:"), " Pragmatism, compromise, institutional stability, evidence-based policy, civility"),
+            ui.p(ui.tags.strong("Key Concerns:"), " Partisan extremism, polarization, functional governance, economic stability"),
+            ui.p(ui.tags.em("Narrative Style: \"Both sides\" framing, appeals to reason and moderation, critique of ideological rigidity"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("Tech Optimist", style="margin-top: 15px;"),
+            ui.p(ui.tags.strong("Core Values:"), " Innovation, progress, entrepreneurship, disruption, technological solutions to problems"),
+            ui.p(ui.tags.strong("Key Concerns:"), " Regulation stifling innovation, Luddite resistance to change, global competitiveness"),
+            ui.p(ui.tags.em("Narrative Style: Future-focused, optimistic about human ingenuity, dismissive of precautionary principle"), style="font-style: italic; color: #555;"),
+            
+            ui.h5("Democratic Socialist", style="margin-top: 15px;"),
+            ui.p(ui.tags.strong("Core Values:"), " Economic democracy, worker power, universal programs, anti-capitalism, internationalism"),
+            ui.p(ui.tags.strong("Key Concerns:"), " Billionaire class, healthcare access, student debt, worker exploitation, corporate dominance"),
+            ui.p(ui.tags.em("Narrative Style: Class struggle, solidarity, \"us vs. oligarchy,\" critique of neoliberalism"), style="font-style: italic; color: #555;"),
+            
+            ui.tags.hr(style="margin: 30px 0;"),
+            
+            ui.h4("Polarization Risk"),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("High Risk:"), " Content strongly resonates with one tribe while threatening or attacking another, likely to amplify division and tribal conflict."),
+                ui.tags.li(ui.tags.strong("Medium Risk:"), " Content appeals to tribal values but doesn't explicitly attack out-groups."),
+                ui.tags.li(ui.tags.strong("Low Risk:"), " Content has broad appeal or minimal tribal signaling.")
+            ),
+            
+            ui.tags.hr(style="margin: 30px 0;"),
+            
+            ui.h4("Application"),
+            ui.p("Understanding tribal resonance helps predict:"),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Amplification patterns:"), " Which communities will share and promote content"),
+                ui.tags.li(ui.tags.strong("Backlash potential:"), " Which tribes will resist or attack the message"),
+                ui.tags.li(ui.tags.strong("Echo chamber effects:"), " How content reinforces existing tribal boundaries"),
+                ui.tags.li(ui.tags.strong("Persuasion limits:"), " Why factually accurate content often fails to cross tribal lines")
+            ),
+            ui.p(ui.tags.strong("Strategic Insight:"), " Content creators must decide whether to maximize resonance within a target tribe (risking polarization) or craft messages that bridge tribal divides (risking lower engagement)."),
+            
+            style="margin: 30px 0; padding: 30px; background: #f9f9f9; border-radius: 8px; border: 1px solid #ddd;"
+        )
+        
+        return ui.div(ui.div(*tribe_cards), theory_description)
     
     # Linguistic Analysis UI
     @output
@@ -1729,8 +2002,68 @@ TEXT:
                     )
                 )
         
+        # 5. Quantifier Vagueness
+        quant = linguistic.get("quantifier_vagueness", {})
+        vague_count = quant.get("vague_quantifier_count", 0)
+        precise_count = quant.get("precise_quantifier_count", 0)
+        vague_ratio = quant.get("vagueness_ratio", 0.0)
+        vague_examples = quant.get("vague_examples", [])
+        precise_examples = quant.get("precise_examples", [])
+        quant_interp = quant.get("vagueness_interpretation", "")
+        
+        # Horizontal bar chart comparing vague vs precise
+        total_quant = vague_count + precise_count
+        vague_pct = (vague_count / total_quant * 100) if total_quant > 0 else 0
+        precise_pct = (precise_count / total_quant * 100) if total_quant > 0 else 0
+        
+        quant_bar_data = {
+            "type": "bar",
+            "orientation": "h",
+            "y": ["Precise (with data)", "Vague (rhetorical)"],
+            "x": [precise_count, vague_count],
+            "marker": {"color": ["#28a745", "#dc3545"]},
+            "text": [f"{precise_count} ({precise_pct:.0f}%)", f"{vague_count} ({vague_pct:.0f}%)"],
+            "textposition": "outside"
+        }
+        quant_bar_layout = {
+            "margin": {"l": 180, "r": 40, "t": 20, "b": 40},
+            "height": 180,
+            "xaxis": {"title": "Quantifier Count"},
+            "paper_bgcolor": "#f8f9fa"
+        }
+        quant_bar_json = _json.dumps({"data": [quant_bar_data], "layout": quant_bar_layout})
+        quant_bar_html = f"""
+        <div id="quantifier_chart" style="width:100%;height:180px;"></div>
+        <script>
+          (function(){{
+            var spec = {quant_bar_json};
+            if (window.Plotly && document.getElementById('quantifier_chart')) {{
+              Plotly.newPlot('quantifier_chart', spec.data, spec.layout, {{displayModeBar:false}});
+            }}
+          }})();
+        </script>
+        """
+        
+        vagueness_score = int(vague_ratio * 100)
+        score_color = "#28a745" if vagueness_score < 30 else "#ffc107" if vagueness_score < 70 else "#dc3545"
+        
+        quantifier_card = ui.div(
+            ui.h4("5. Quantifier Vagueness"),
+            ui.p(f"Vagueness Ratio: {vague_ratio:.2f} | Score: ", 
+                 ui.tags.span(f"{vagueness_score}", style=f"font-weight:700; color:{score_color};"), 
+                 "/100", style="font-weight:600;"),
+            ui.HTML(quant_bar_html),
+            ui.p(quant_interp, style="font-size:0.9em; color:#333; margin-top:12px;"),
+            ui.tags.strong("Vague Examples:", style="font-size:0.9em; margin-top:8px; display:block;"),
+            ui.tags.ul(*[ui.tags.li(f'"{ex}"', style="font-size:0.85em; color:#dc3545; font-style:italic;") for ex in vague_examples[:3]]) if vague_examples else ui.p("None detected.", style="font-size:0.85em; color:#666;"),
+            ui.tags.strong("Precise Examples:", style="font-size:0.9em; margin-top:8px; display:block;"),
+            ui.tags.ul(*[ui.tags.li(f'"{ex}"', style="font-size:0.85em; color:#28a745; font-style:italic;") for ex in precise_examples[:3]]) if precise_examples else ui.p("None detected.", style="font-size:0.85em; color:#666;"),
+            class_="foundation-card"
+        )
+        sections.append(quantifier_card)
+        
         persuasion_card = ui.div(
-            ui.h4("5. Persuasion Signature (15 Rhetorical Devices)"),
+            ui.h4("6. Persuasion Signature (15 Rhetorical Devices)"),
             ui.p(f"Density: {density:.1f} devices/1k words | Net Valence: {valence:+.2f} | Classification: {classification}", style="font-weight:600;"),
             ui.HTML(radar_html),
             ui.p(pers_interp, style="font-size:0.9em; color:#333; margin-top:12px;"),
@@ -1739,6 +2072,161 @@ TEXT:
             class_="foundation-card"
         )
         sections.append(persuasion_card)
+        
+        framework_description = ui.div(
+            ui.tags.hr(style="margin: 40px 0 30px 0; border-top: 2px solid #ccc;"),
+            ui.h3("Linguistic Forensics Framework", style="margin-top: 30px;"),
+            
+            ui.h4("Core Principles", style="margin-top: 20px;"),
+            ui.p("Linguistic Forensics analyzes how language choices shape perception, assign responsibility, and reveal hidden ideological frames. This framework examines the subtle ways that grammatical structures, word choices, and rhetorical patterns influence how we understand events, assign blame, and construct narratives about reality."),
+            ui.p(ui.tags.strong("Key Insight:"), " Language is never neutral. Every linguistic choice—passive vs. active voice, certainty vs. hedging, us vs. them framing—carries ideological weight and shapes how audiences perceive causality, agency, and moral responsibility."),
+            
+            ui.tags.hr(style="margin: 30px 0;"),
+            
+            ui.h4("Analytical Dimensions"),
+            
+            ui.h5("1. Agency & Responsibility (Passive Voice Analysis)", style="margin-top: 20px;"),
+            ui.p(ui.tags.strong("What It Measures:"), " Percentage of passive voice constructions that obscure who is responsible for actions"),
+            ui.p(ui.tags.strong("Examples of Hidden Agency:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.em("\"Mistakes were made\""), " → Who made them?"),
+                ui.tags.li(ui.tags.em("\"Protesters were shot\""), " → Who shot them?"),
+                ui.tags.li(ui.tags.em("\"The decision was reached\""), " → Who decided?")
+            ),
+            ui.p(ui.tags.strong("Interpretation:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Low passive voice (0-20%):"), " Clear assignment of agency and responsibility"),
+                ui.tags.li(ui.tags.strong("Moderate (20-40%):"), " Mixed; some accountability evasion"),
+                ui.tags.li(ui.tags.strong("High (40%+):"), " Systematic obscuring of actors, likely institutional defensiveness or spin")
+            ),
+            
+            ui.h5("2. Othering Index (Us vs. Them Language)", style="margin-top: 20px;"),
+            ui.p(ui.tags.strong("What It Measures:"), " Ratio of out-group pronouns (they/them/those) to in-group pronouns (we/us/our), plus identification of specific out-group labels"),
+            ui.p(ui.tags.strong("Pronoun Patterns:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("In-group:"), " \"We believe...\", \"Our values...\", \"Us patriots...\""),
+                ui.tags.li(ui.tags.strong("Out-group:"), " \"They want to...\", \"Those people...\", \"Them liberals/conservatives...\"")
+            ),
+            ui.p(ui.tags.strong("Interpretation:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Ratio < 1.0:"), " More inclusive, emphasizes shared identity"),
+                ui.tags.li(ui.tags.strong("Ratio 1.0-2.0:"), " Balanced or moderate tribal signaling"),
+                ui.tags.li(ui.tags.strong("Ratio > 2.0:"), " High polarization, strong us-vs-them framing, tribal warfare rhetoric")
+            ),
+            
+            ui.h5("3. Dogmatism Score (Certainty vs. Hedging)", style="margin-top: 20px;"),
+            ui.p(ui.tags.strong("What It Measures:"), " Balance between high-certainty language (\"clearly\", \"obviously\", \"must\") and hedging language (\"might\", \"possibly\", \"could\"), scored 0-100"),
+            ui.p(ui.tags.strong("Language Patterns:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("High Modality:"), " \"Undeniably\", \"certainly\", \"without doubt\", \"proven fact\""),
+                ui.tags.li(ui.tags.strong("Low Modality:"), " \"Perhaps\", \"appears to\", \"suggests\", \"may indicate\"")
+            ),
+            ui.p(ui.tags.strong("Interpretation:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Score 0-40:"), " Cautious, academic, or appropriately tentative given evidence"),
+                ui.tags.li(ui.tags.strong("Score 40-70:"), " Moderate confidence, balanced epistemic commitment"),
+                ui.tags.li(ui.tags.strong("Score 70-100:"), " Highly dogmatic, ideologically rigid, propaganda-like certainty")
+            ),
+            
+            ui.h5("4. Complexity & Populism Fingerprint", style="margin-top: 20px;"),
+            ui.p(ui.tags.strong("What It Measures:"), " Reading grade level (Flesch-Kincaid), lexical density, and stylistic classification"),
+            ui.p(ui.tags.strong("Style Classifications:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Academic/Elite (Grade 13+):"), " Complex sentences, technical vocabulary, high lexical density"),
+                ui.tags.li(ui.tags.strong("Mainstream (Grade 8-12):"), " Standard journalism or educated discourse"),
+                ui.tags.li(ui.tags.strong("Populist (Grade < 8):"), " Simple, direct, accessible to broad audience")
+            ),
+            ui.p(ui.tags.strong("Interpretation:"), " Lower grade level doesn't mean \"dumb\"—it can indicate effective communication or deliberate populist appeal. High grade level can signal expertise or elitist gatekeeping."),
+            
+            ui.h5("5. Quantifier Vagueness", style="margin-top: 20px;"),
+            ui.p(ui.tags.strong("What It Measures:"), " Ratio of vague quantifiers (\"many\", \"most\", \"some\") to precise quantifiers (specific numbers, percentages, data with sources)"),
+            ui.p(ui.tags.strong("Vague Quantifiers:")),
+            ui.tags.ul(
+                ui.tags.li("\"Many experts agree...\""),
+                ui.tags.li("\"A growing number of studies...\""),
+                ui.tags.li("\"Most people believe...\""),
+                ui.tags.li("\"Increasingly widespread concern...\""),
+                ui.tags.li("\"Significant evidence suggests...\"")
+            ),
+            ui.p(ui.tags.strong("Precise Quantifiers:")),
+            ui.tags.ul(
+                ui.tags.li("\"73% of climate scientists in a 2023 survey...\""),
+                ui.tags.li("\"14 peer-reviewed studies published between 2020-2024...\""),
+                ui.tags.li("\"2,400 participants across 8 countries...\""),
+                ui.tags.li("\"Crime rates decreased 23% from 2015 to 2023 (FBI data)...\"")
+            ),
+            ui.p(ui.tags.strong("Interpretation:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Low Vagueness (< 0.3):"), " Evidence-based, empirically grounded, verifiable claims"),
+                ui.tags.li(ui.tags.strong("Moderate (0.3-0.7):"), " Mixed; some data, some impressionistic claims"),
+                ui.tags.li(ui.tags.strong("High Vagueness (> 0.7):"), " Rhetorical inflation, weak evidential basis, opinion presented as fact")
+            ),
+            ui.p(ui.tags.strong("Why It Matters:"), " Vague quantifiers allow speakers to make sweeping claims while evading accountability. Precise quantifiers enable verification and critical evaluation. High vagueness often indicates that the evidence doesn't actually support the claim being made."),
+            
+            ui.h5("6. Persuasion Signature (15 Rhetorical Devices)", style="margin-top: 20px;"),
+            ui.p(ui.tags.strong("What It Measures:"), " Density (devices per 1000 words) and valence (positive/negative) of 15 specific rhetorical techniques"),
+            
+            ui.p(ui.tags.strong("The 15 Rhetorical Devices:"), style="margin-top: 15px;"),
+            
+            ui.tags.strong("Negative-Valence Devices (Fallacies & Manipulation):"),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Strawman Argument:"), " Misrepresenting opponent's position to make it easier to attack"),
+                ui.tags.li(ui.tags.strong("False Dichotomy:"), " Presenting complex issues as having only two options"),
+                ui.tags.li(ui.tags.strong("Ad Hominem:"), " Attacking the person rather than their argument"),
+                ui.tags.li(ui.tags.strong("Slippery Slope:"), " Claiming a small step inevitably leads to extreme consequences"),
+                ui.tags.li(ui.tags.strong("Whataboutism:"), " Deflecting criticism by pointing to hypocrisy elsewhere"),
+                ui.tags.li(ui.tags.strong("Dog Whistle:"), " Coded language that appears normal but signals specific meaning to in-group"),
+                ui.tags.li(ui.tags.strong("Proof by Gallup:"), " Overwhelming reader with so many arguments that refutation becomes impossible"),
+                ui.tags.li(ui.tags.strong("Motte-and-Bailey:"), " Conflating a modest claim (the Motte) with a controversial one (the Bailey)"),
+                ui.tags.li(ui.tags.strong("Catastrophizing:"), " Emphasizing worst-case scenarios to induce fear or panic"),
+                ui.tags.li(ui.tags.strong("Epistemic Closure:"), " Rhetoric that prevents consideration of outside sources (\"fake news\", \"propaganda\")")
+            ),
+            
+            ui.tags.strong("Mixed-Valence Devices (Can Be Positive or Negative):"),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Loaded Language:"), " Words with strong emotional connotations (positive or negative)"),
+                ui.tags.li(ui.tags.strong("Appeal to Authority:"), " Citing expert opinion (positive if legitimate, negative if false authority)"),
+                ui.tags.li(ui.tags.strong("Euphemism/Dysphemism:"), " Softening harsh realities OR degrading neutral concepts")
+            ),
+            
+            ui.tags.strong("Positive-Valence Devices (Persuasive but Not Necessarily Manipulative):"),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Anaphora:"), " Repetition of words/phrases at beginning of clauses for rhythmic or rallying effect"),
+                ui.tags.li(ui.tags.strong("Bandwagon:"), " Arguing something is right because many people believe it (appeal to consensus)")
+            ),
+            
+            ui.p(ui.tags.strong("Density Interpretation:"), style="margin-top: 15px;"),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Low Density (< 10 per 1k words):"), " Straightforward, minimal rhetorical manipulation"),
+                ui.tags.li(ui.tags.strong("Moderate (10-25):"), " Normal persuasive writing"),
+                ui.tags.li(ui.tags.strong("High (25-50):"), " Heavily rhetorical, activist or opinion writing"),
+                ui.tags.li(ui.tags.strong("Extreme (> 50):"), " Propaganda-level manipulation, every sentence loaded with devices")
+            ),
+            
+            ui.p(ui.tags.strong("Net Valence Interpretation:")),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Positive:"), " Persuasive but relatively honest; uses rallying rhetoric more than fallacies"),
+                ui.tags.li(ui.tags.strong("Neutral:"), " Mixed bag of positive and negative techniques"),
+                ui.tags.li(ui.tags.strong("Negative:"), " Heavy use of logical fallacies, bad-faith argumentation, manipulative tactics")
+            ),
+            
+            ui.tags.hr(style="margin: 30px 0;"),
+            
+            ui.h4("Application"),
+            ui.p("Linguistic Forensics helps you:"),
+            ui.tags.ul(
+                ui.tags.li(ui.tags.strong("Detect spin:"), " Identify when language obscures rather than clarifies"),
+                ui.tags.li(ui.tags.strong("Assess credibility:"), " Distinguish evidence-based claims from rhetorical manipulation"),
+                ui.tags.li(ui.tags.strong("Understand persuasion:"), " See how linguistic choices prime audiences for specific conclusions"),
+                ui.tags.li(ui.tags.strong("Recognize tribal signaling:"), " Spot us-vs-them framing and in-group/out-group dynamics"),
+                ui.tags.li(ui.tags.strong("Evaluate confidence:"), " Distinguish appropriate certainty from ideological dogmatism")
+            ),
+            ui.p(ui.tags.strong("Strategic Insight:"), " Changing the language changes the debate. Those who control the terms of discussion often control the outcome. Recognizing these patterns helps you resist manipulation and think more critically about persuasive content."),
+            
+            style="margin: 30px 0; padding: 30px; background: #f9f9f9; border-radius: 8px; border: 1px solid #ddd;"
+        )
+        
+        sections.append(framework_description)
         
         return ui.div(*sections)
     

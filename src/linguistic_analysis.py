@@ -8,12 +8,13 @@ class LinguisticAnalyzer:
     """
     Analyzes linguistic patterns to detect persuasion tactics and manipulation.
     
-    Five core modules:
+    Six core modules:
     1. Agency & Responsibility (passive voice detection)
     2. Othering Index (us vs. them pronoun analysis)
     3. Dogmatism Score (modal verb certainty)
     4. Complexity & Populism (reading level)
     5. Persuasion Signature (rhetorical device density & valence)
+    6. Quantifier Vagueness (precision vs. exaggeration in claims)
     """
     
     def __init__(self, gemini_client: GeminiClient):
@@ -29,7 +30,7 @@ class LinguisticAnalyzer:
             
         Returns:
             Dict with agency_analysis, polarization_metrics, certainty_metrics, 
-            readability, and persuasion_signature keys
+            readability, persuasion_signature, and quantifier_vagueness keys
         """
         if not content or not content.strip():
             return self._empty_result()
@@ -63,6 +64,14 @@ Return ONLY valid JSON with this EXACT structure:
     "lexical_density": 0.0-1.0,
     "style_classification": "Academic|Populist|Conversational|Technical",
     "complexity_interpretation": "brief analysis"
+  }},
+  "quantifier_vagueness": {{
+    "vague_quantifier_count": int,
+    "precise_quantifier_count": int,
+    "vagueness_ratio": 0.0-1.0,
+    "vague_examples": ["many experts", "growing number"],
+    "precise_examples": ["73% of scientists", "14 studies"],
+    "vagueness_interpretation": "brief analysis of precision vs. rhetorical inflation"
   }},
   "persuasion_signature": {{
     "rhetorical_density_score": 0.0-100.0,
@@ -112,7 +121,15 @@ ANALYSIS INSTRUCTIONS:
    - Lexical density = (content words / total words).
    - Style: Academic (>12), Conversational (6-10), Populist (<8 with simple vocab).
 
-5. PERSUASION SIGNATURE:
+5. QUANTIFIER VAGUENESS:
+   - Vague quantifiers: many, most, some, several, few, numerous, countless, a lot of, growing number, increasingly, widespread, significant, substantial, considerable.
+   - Precise quantifiers: specific numbers (73%, 14 studies, 2,400 participants), named sources with dates, verifiable data points.
+   - vagueness_ratio = vague_count / (vague_count + precise_count).
+   - High ratio (>0.7) = weak evidence, rhetorical inflation.
+   - Low ratio (<0.3) = evidence-based, empirically grounded.
+   - Provide examples of both vague and precise claims.
+
+6. PERSUASION SIGNATURE:
    - Identify these SPECIFIC 15 rhetorical devices with counts and valence:
      
      1. STRAWMAN ARGUMENT: Misrepresenting opponent's argument to make it easier to attack (Valence: negative)
@@ -149,6 +166,7 @@ TEXT (first 10k chars):
                 "polarization_metrics": {"us_vs_them_ratio": 0.0, "ingroup_pronouns": {}, "outgroup_pronouns": {}, "most_used_outgroup_label": None, "polarization_interpretation": "Analysis failed"},
                 "certainty_metrics": {"dogmatism_score": 0, "high_modality_count": 0, "low_modality_count": 0, "dominant_modals": [], "certainty_interpretation": "Analysis failed"},
                 "readability": {"grade_level": 0.0, "avg_sentence_length": 0.0, "lexical_density": 0.0, "style_classification": "Unknown", "complexity_interpretation": "Analysis failed"},
+                "quantifier_vagueness": {"vague_quantifier_count": 0, "precise_quantifier_count": 0, "vagueness_ratio": 0.0, "vague_examples": [], "precise_examples": [], "vagueness_interpretation": "Analysis failed"},
                 "persuasion_signature": {"rhetorical_density_score": 0.0, "net_valence_score": 0.0, "classification": "Unknown", "devices": [], "signature_interpretation": "Analysis failed"},
                 "error": result.get("error")
             }
@@ -172,6 +190,10 @@ TEXT (first 10k chars):
             readability = data.get("readability", {})
             if not isinstance(readability, dict):
                 readability = {}
+            
+            quantifier = data.get("quantifier_vagueness", {})
+            if not isinstance(quantifier, dict):
+                quantifier = {}
             
             persuasion = data.get("persuasion_signature", {})
             if not isinstance(persuasion, dict):
@@ -203,6 +225,14 @@ TEXT (first 10k chars):
                     "lexical_density": float(readability.get("lexical_density", 0.0)),
                     "style_classification": readability.get("style_classification", "Unknown"),
                     "complexity_interpretation": readability.get("complexity_interpretation", "")
+                },
+                "quantifier_vagueness": {
+                    "vague_quantifier_count": int(quantifier.get("vague_quantifier_count", 0)),
+                    "precise_quantifier_count": int(quantifier.get("precise_quantifier_count", 0)),
+                    "vagueness_ratio": float(quantifier.get("vagueness_ratio", 0.0)),
+                    "vague_examples": quantifier.get("vague_examples", []),
+                    "precise_examples": quantifier.get("precise_examples", []),
+                    "vagueness_interpretation": quantifier.get("vagueness_interpretation", "")
                 },
                 "persuasion_signature": {
                     "rhetorical_density_score": float(persuasion.get("rhetorical_density_score", 0.0)),
@@ -248,6 +278,14 @@ TEXT (first 10k chars):
                 "lexical_density": 0.0,
                 "style_classification": "Unknown",
                 "complexity_interpretation": "No content to analyze"
+            },
+            "quantifier_vagueness": {
+                "vague_quantifier_count": 0,
+                "precise_quantifier_count": 0,
+                "vagueness_ratio": 0.0,
+                "vague_examples": [],
+                "precise_examples": [],
+                "vagueness_interpretation": "No content to analyze"
             },
             "persuasion_signature": {
                 "rhetorical_density_score": 0.0,
