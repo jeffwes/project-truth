@@ -74,6 +74,76 @@ MORAL FOUNDATIONS PROFILE:
 
 {taxonomy_summary}
 
+TRIBAL RESONANCE THEORY - COMPREHENSIVE FRAMEWORK:
+
+Modern political discourse is organized around distinct social/political tribes, each with characteristic moral foundations profiles, narrative styles, and core values. Content resonates with tribes when it activates their dominant moral foundations and employs their preferred rhetorical strategies. Understanding tribal resonance predicts which audiences will amplify or reject a message.
+
+THE EIGHT MAJOR TRIBES:
+
+1. PROGRESSIVE LEFT
+Moral Profile: Very high Care/Harm, very high Fairness/Cheating, very high Liberty/Oppression. Low Loyalty, Authority, Sanctity.
+Core Values: Social justice, equity, anti-oppression, universal compassion, systemic change
+Narrative Style: Emphasis on structural analysis, power dynamics, marginalized voices, intersectionality
+Key Triggers: Suffering of vulnerable groups, inequality, discrimination, social injustice, oppression
+Rhetorical Patterns: Academic language, theory-heavy, appeals to studies, moral urgency about harm reduction
+
+2. DEMOCRATIC ESTABLISHMENT / CENTER-LEFT
+Moral Profile: High Care, high Fairness, moderate Loyalty, moderate Authority, moderate Liberty
+Core Values: Pragmatic reform, institutions, expertise, evidence-based policy, incremental progress
+Narrative Style: Policy wonkism, institutional trust, expert consensus, data-driven
+Key Triggers: Evidence-based solutions, institutional legitimacy, expert opinion, pragmatic compromise
+Rhetorical Patterns: Technocratic, appeals to credentials, moderate tone, coalition-building language
+
+3. LIBERTARIAN
+Moral Profile: Very high Liberty/Oppression, high Fairness (procedural), low Authority, low Loyalty
+Core Values: Individual freedom, free markets, limited government, personal responsibility, non-aggression
+Narrative Style: Principled reasoning from first principles, constitutional originalism, economic logic
+Key Triggers: Government overreach, taxation, regulation, individual rights violations, market efficiency
+Rhetorical Patterns: Appeals to freedom, "slippery slope" warnings about tyranny, economic arguments
+
+4. CONSERVATIVE ESTABLISHMENT / CENTER-RIGHT  
+Moral Profile: Moderate-high across all six foundations (balanced moral matrix)
+Core Values: Free enterprise, individual responsibility, ordered liberty, traditional institutions, gradual reform
+Narrative Style: Emphasis on proven institutions, historical wisdom, unintended consequences, realism
+Key Triggers: Respect for tradition, economic growth, family values, law and order, national security
+Rhetorical Patterns: Appeals to tradition, historical precedent, practical consequences, business prosperity
+
+5. RELIGIOUS CONSERVATIVE
+Moral Profile: Very high Sanctity/Degradation, very high Authority, high Loyalty, moderate Care
+Core Values: Traditional morality, religious authority, family values, sanctity of life, moral order
+Narrative Style: Biblical references, moral absolutes, faith-based reasoning, eternal truths
+Key Triggers: Religious persecution, moral decay, family breakdown, abortion, sexual morality
+Rhetorical Patterns: Scripture citations, moral clarity, prophetic warnings, "culture war" framing
+
+6. POPULIST RIGHT / MAGA
+Moral Profile: Very high Loyalty, very high Liberty (anti-elite), high Authority (certain leaders), moderate-low Fairness
+Core Values: America First, anti-establishment, nationalist, working-class identity, "common sense"
+Narrative Style: Plain-spoken, anti-elite, conspiratorial about institutions, "us vs. them" framing
+Key Triggers: Betrayal by elites, national sovereignty threats, "real Americans" vs. coastal elites, immigration
+Rhetorical Patterns: Populist language, simple sentences, emotional appeals, anti-expert, tribal signaling
+
+7. CENTRIST / MODERATE
+Moral Profile: Balanced across foundations but lower intensity than ideological tribes
+Core Values: Pragmatism, compromise, "both sides have a point", stability, common ground
+Narrative Style: "On the one hand... on the other hand", critique of extremes, complexity acknowledgment
+Key Triggers: Extreme rhetoric from either side, partisan gridlock, practical solutions, common sense
+Rhetorical Patterns: Balanced tone, "reasonable people can disagree", appeals to moderation
+
+8. APOLITICAL / DISENGAGED
+Moral Profile: Variable but low activation on political content
+Core Values: Personal life focus, skepticism of politics, practical self-interest, entertainment
+Narrative Style: Avoids political framing, personal stories, immediate relevance
+Key Triggers: Direct impact on daily life, personal safety, entertainment value, non-political hooks
+Rhetorical Patterns: Accessible language, personal relevance, avoids partisan signals
+
+KEY INSIGHTS FOR RESONANCE PREDICTION:
+
+- Content resonates when it activates a tribe's dominant moral foundations at high intensity
+- Narrative style matching is crucial: academic language attracts progressives but repels populists
+- Cross-tribal appeal requires activating shared foundations (Liberty resonates with both libertarians and progressives; Care can bridge left and some religious conservatives)
+- High polarization occurs when content simultaneously activates positive valence for one tribe's dominant foundations while violating another tribe's (e.g., immigration restriction appeals to Loyalty/Authority for conservatives while violating Care/Fairness for progressives)
+- The absence of certain foundations can be as revealing as their presence (e.g., no Loyalty/Authority signals = progressive; no Care/Fairness = conservative)
+
 TRIBAL CATEGORIES:
 {tribes_desc}
 

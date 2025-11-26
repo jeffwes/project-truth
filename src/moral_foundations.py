@@ -56,6 +56,73 @@ class MoralFoundationsAnalyzer:
 CONTENT:
 {content[:8000]}
 
+MORAL FOUNDATIONS THEORY - COMPREHENSIVE FRAMEWORK:
+
+Moral Foundations Theory (Jonathan Haidt) identifies six innate psychological systems that shape moral judgment across cultures. These "foundations" are like taste receptors—everyone has them, but political tribes differ dramatically in which foundations they weight most heavily. Understanding which foundations a piece of content activates reveals its tribal targeting and persuasive strategy.
+
+THE SIX FOUNDATIONS:
+
+1. CARE/HARM
+Core Concern: Suffering, compassion, nurturing, protection of vulnerable
+Triggered By: Children in distress, victims of cruelty, medical suffering, vulnerable populations, protective instincts
+Political Pattern:
+- Progressives: VERY HIGH (primary moral foundation)
+- Conservatives: MODERATE (balanced with other foundations)
+Examples: Healthcare access, child welfare, refugee protection, pandemic response, animal welfare
+
+2. FAIRNESS/CHEATING  
+Core Concern: Justice, reciprocity, proportionality, equality, rights violations
+Triggered By: Unfair treatment, exploitation, unequal distribution, cheating, rule violations
+Political Pattern:
+- Progressives: VERY HIGH (equality/equity emphasis)
+- Libertarians: HIGH (procedural fairness, meritocracy)
+- Conservatives: MODERATE (proportional fairness, "you get what you deserve")
+Examples: Taxation debates, affirmative action, economic inequality, legal rights, meritocracy vs. equity
+
+3. LOYALTY/BETRAYAL
+Core Concern: Group cohesion, patriotism, tribal solidarity, team identity
+Triggered By: National symbols, in-group pride, betrayal of the group, team sports, military service
+Political Pattern:
+- Conservatives: VERY HIGH ("America First", military reverence)
+- Progressives: LOW (universal humanity emphasis, skepticism of nationalism)
+Examples: Flag rituals, immigration restrictionism, "anti-American" accusations, "with us or against us" rhetoric
+
+4. AUTHORITY/SUBVERSION
+Core Concern: Respect for hierarchy, tradition, leadership, social order
+Triggered By: Deference to legitimate authority, respect for tradition, order vs. chaos, rebellion against rightful power
+Political Pattern:
+- Conservatives: VERY HIGH (respect for police, military, religious authority, tradition)
+- Progressives: LOW (questioning authority, dismantling hierarchies)
+Examples: "Back the Blue", religious authority, traditional gender roles, "law and order", institutional deference
+
+5. SANCTITY/DEGRADATION
+Core Concern: Purity, sacredness, disgust, elevated ideals vs. contamination
+Triggered By: Purity/contamination, sacred values, moral disgust, spiritual elevation, bodily integrity
+Political Pattern:
+- Religious Conservatives: VERY HIGH (sexual purity, religious sanctity)
+- Progressives: MODERATE-LOW (but can be HIGH around environmental purity, body autonomy as sacred)
+Examples: Sexual morality, religious reverence, "sanctity of life", environmental purity, bodily autonomy, GMO fears
+
+6. LIBERTY/OPPRESSION
+Core Concern: Freedom from domination, resistance to tyranny, individual autonomy
+Triggered By: Tyranny, oppression, bullying, freedom, resistance to control, individual rights
+Political Pattern:
+- Libertarians: VERY HIGH (primary foundation)
+- Populists: HIGH (anti-elite, anti-establishment)
+- Progressives: HIGH (anti-oppression, liberation movements)
+- Conservatives: MODERATE (freedom within order)
+Examples: Free speech, gun rights, vaccine mandates, anti-authoritarianism, liberation movements, "don't tread on me"
+
+KEY INSIGHTS:
+
+- Progressives rely heavily on Care and Fairness, with lower emphasis on Loyalty, Authority, and Sanctity. This makes progressive messaging focused on suffering reduction and equality.
+
+- Conservatives weight all six foundations more evenly, with especially high Loyalty, Authority, and Sanctity. This makes conservative messaging emphasize tradition, order, and group cohesion.
+
+- Libertarians spike on Liberty/Oppression and downplay Authority, making them suspicious of both government power and social conformity pressure.
+
+- Most political conflict stems from tribes talking past each other because they're activating different moral foundations. What progressives see as compassion (high Care), conservatives may see as naive bleeding-heart sentimentality that ignores group boundaries (low Loyalty) and proper order (low Authority).
+
 MORAL FOUNDATIONS TO ANALYZE:
 {foundations_desc}
 

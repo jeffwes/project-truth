@@ -89,20 +89,59 @@ TEXT:
 
 ASSERTION: "{assertion}"
 
-CLASSIFICATION FRAMEWORK:
+HARARI'S REALITY TAXONOMY - COMPREHENSIVE FRAMEWORK:
 
-1. OBJECTIVE REALITY: Phenomena that exist independently of human consciousness
-   - Examples: Radioactivity, river flow rates, biological viruses, gravity
-   - These existed before humans and would continue without us
-   
-2. SUBJECTIVE REALITY: Phenomena that exist only in individual consciousness
-   - Examples: Personal pain, individual feelings, private thoughts, personal preferences
-   - Unique to each person, cannot be directly shared
-   
-3. INTERSUBJECTIVE REALITY: Phenomena sustained by shared beliefs
-   - Examples: Money, laws, nations, corporations, human rights, religions
-   - Exist because many humans believe in them; would vanish if belief ceased
-   - The "shared myths" that organize human society
+This framework distinguishes three fundamentally different types of reality based on their relationship to human consciousness. Understanding these categories reveals how different types of claims should be evaluated and what forms of evidence are appropriate for each.
+
+TIER 1: OBJECTIVE REALITY
+Definition: Phenomena that exist independently of human beliefs, perceptions, or consciousness. These truths existed before humans evolved and would continue to exist if humanity disappeared tomorrow.
+
+Characteristics:
+- Verifiable through empirical observation and measurement
+- Consistent across cultures and time periods
+- Governed by natural laws (physics, chemistry, biology)
+- Can be studied through scientific method
+- Examples: Gravity, radioactive decay, molecular structures, river flow rates, planetary orbits, biological viruses, chemical reactions
+
+Political Significance: Claims presented as objective facts ("Studies show...", "The data proves...") should be held to empirical standards. Misinformation often disguises intersubjective assertions (ideological beliefs) as objective truths.
+
+TIER 2: SUBJECTIVE REALITY
+Definition: Phenomena that exist solely within individual consciousness. These experiences are real to the individual but cannot be directly shared or verified by others.
+
+Characteristics:
+- Exists only in a single person's mind
+- Private, first-person experiences
+- Cannot be empirically measured from outside
+- Examples: Personal pain, individual preferences ("I love chocolate"), private thoughts, emotions felt by one person, aesthetic experiences
+
+Political Significance: Subjective experiences are genuine but not universalizable. Rhetoric that conflates personal feelings with objective truth ("I feel threatened, therefore you are threatening") collapses important distinctions.
+
+TIER 3: INTERSUBJECTIVE REALITY (Shared Myths)
+Definition: Phenomena that exist only because many humans collectively believe in them. These "myths" (not meaning false, but meaning shared stories) organize human society. They are real in their consequences but would vanish if collective belief ceased.
+
+Three Sub-Tiers:
+
+3A. FOUNDATIONAL MYTHS (Most Deeply Embedded)
+- Examples: Money, property rights, corporate personhood, national sovereignty, marriage as a legal institution
+- So deeply embedded they feel like natural laws
+- Require massive institutional support
+- Extremely difficult to change
+
+3B. SACRED NARRATIVES (Meaning-Making Systems)
+- Examples: Religious doctrines, political ideologies, human rights frameworks, justice concepts, national origin stories
+- Provide moral frameworks and group identity
+- Contested between groups
+- Can evolve but face strong resistance
+
+3C. CONTINGENT CONSTRUCTIONS (Most Fluid)
+- Examples: Fashion trends, social etiquette norms, professional status hierarchies, celebrity fame
+- Change relatively quickly
+- Less institutionally embedded
+- More consciously recognized as constructed
+
+Political Significance: Much political conflict involves competing intersubjective realities (different "myths" about justice, rights, national identity). Recognizing something as intersubjective doesn't make it less real or less important—money and laws shape our lives profoundly—but it reveals that these realities can be renegotiated through collective belief change.
+
+KEY INSIGHT: The most powerful rhetoric obscures category boundaries—presenting intersubjective beliefs ("America is a Christian nation") as objective facts, or elevating subjective preferences ("I find this offensive") to the status of universal moral truths.
 
 Return JSON with this structure:
 {{
