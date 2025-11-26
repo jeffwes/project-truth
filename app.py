@@ -721,17 +721,18 @@ TEXT:
             class_="foundation-card"
         ))
 
-        # 3) Top-3 Tribal Resonance Bars
+        # 3) Tribal Resonance Bars (All tribes, sorted)
         preds = tribes.get("predictions", []) or []
         try:
-            top3 = sorted(preds, key=lambda x: x.get("resonance_score", 0.0), reverse=True)[:3]
+            sorted_preds = sorted(preds, key=lambda x: x.get("resonance_score", 0.0), reverse=True)
         except Exception:
-            top3 = []
-        tribe_names = [t.get("name", "unknown") for t in top3]
-        tribe_scores = [float(t.get("resonance_score", 0.0) or 0.0) for t in top3]
-        sentiments = [str(t.get("sentiment", "neutral") or "neutral").lower() for t in top3]
+            sorted_preds = []
+        tribe_names = [p.get("name", "unknown") for p in sorted_preds]
+        tribe_scores = [float(p.get("resonance_score", 0.0) or 0.0) for p in sorted_preds]
+        sentiments = [str(p.get("sentiment", "neutral") or "neutral").lower() for p in sorted_preds]
         colors = [("#28a745" if s == "positive" else "#6c757d" if s == "neutral" else "#dc3545") for s in sentiments]
-        if top3:
+        if sorted_preds:
+            height = max(180, 40 * len(sorted_preds))
             tribe_bar = {
                 "data": [{
                     "type": "bar",
@@ -743,20 +744,20 @@ TEXT:
                     "textposition": "outside"
                 }],
                 "layout": {
-                    "margin": {"l": 200, "r": 40, "t": 10, "b": 30},
-                    "height": 200,
+                    "margin": {"l": 220, "r": 40, "t": 10, "b": 30},
+                    "height": height,
                     "xaxis": {"title": "Resonance", "range": [0, 1]},
                     "paper_bgcolor": "#f8f9fa",
                     "showlegend": False
                 }
             }
             tribe_bar_html = f"""
-            <div id=\"overview_tribe_top3\" style=\"width:100%;height:200px;\"></div>
+            <div id=\"overview_tribe_all\" style=\"width:100%;height:{height}px;\"></div>
             <script>
               (function(){{
                 var spec = {_json.dumps(tribe_bar)};
-                if (window.Plotly && document.getElementById('overview_tribe_top3')) {{
-                  Plotly.newPlot('overview_tribe_top3', spec.data, spec.layout, {{displayModeBar:false}});
+                if (window.Plotly && document.getElementById('overview_tribe_all')) {{
+                  Plotly.newPlot('overview_tribe_all', spec.data, spec.layout, {{displayModeBar:false}});
                 }}
               }})();
             </script>
@@ -768,7 +769,7 @@ TEXT:
         pol_color = 'red' if pol_risk == 'high' else 'orange' if pol_risk == 'medium' else '#28a745'
 
         cards.append(ui.div(
-            ui.h4("Top Tribal Resonance"),
+            ui.h4("Tribal Resonance (All)"),
             ui.HTML(tribe_bar_html),
             ui.p(f"Polarization Risk: {pol_risk.title()}", style=f"color:{pol_color}; margin-top:6px;"),
             class_="foundation-card"
