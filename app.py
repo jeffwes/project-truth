@@ -907,18 +907,86 @@ TEXT:
                 "paper_bgcolor": "#ffffff",
                 "height": 540
             }
-            fig_json = _json.dumps({"data": [sunburst_data], "layout": layout})
-            sunburst_html = f"""
-            <div id="sunburst_rt" style="width:100%;height:540px;margin-bottom:24px;border:1px solid #e0e0e0;border-radius:4px;"></div>
-            <script>
-              (function(){{
-                var spec = {fig_json};
-                if (window.Plotly && document.getElementById('sunburst_rt')) {{
-                  Plotly.newPlot('sunburst_rt', spec.data, spec.layout, {{displayModeBar:false}});
-                }}
-              }})();
-            </script>
-            """
+                        fig_json = _json.dumps({"data": [sunburst_data], "layout": layout})
+                        # Build second (direct) sunburst: myth/empathy directly under classification
+                        sb2_labels = ["Reality (Direct)"]
+                        sb2_parents = [""]
+                        sb2_values = [sum(values)]
+                        sb2_custom = ["Direct counts by myth & empathy bias"]
+
+                        def push2(label, parent, value, examples_key=None):
+                                sb2_labels.append(label)
+                                sb2_parents.append(parent)
+                                sb2_values.append(value)
+                                ex = node_examples.get(examples_key or label, [])
+                                sb2_custom.append("\n".join(ex) or label)
+
+                        for label, cnt in class_counts.items():
+                                if cnt > 0:
+                                        push2(label, "Reality (Direct)", cnt, label)
+
+                        for k, v in fact_counts.items():
+                                if v > 0:
+                                        push2(f"Fact: {k.replace('_',' ').title()}", "Objective", v)
+
+                        # Myth directly under Intersubjective
+                        myth_direct_counts = {m: 0 for m in myth_keys}
+                        for a in assertions:
+                                if a.get("classification") == "intersubjective":
+                                        mt = (a.get("myth_taxonomy") or {}).get("category")
+                                        if mt in myth_direct_counts:
+                                                myth_direct_counts[mt] += 1
+                        for m, c in myth_direct_counts.items():
+                                if c > 0:
+                                        push2(f"Myth: {m.replace('_',' ').title()}", "Intersubjective", c, f"Myth: {m.replace('_',' ').title()}")
+
+                        # Empathy bias directly under Subjective
+                        empathy_direct_counts = {e: 0 for e in empathy_keys}
+                        for a in assertions:
+                                if a.get("classification") == "subjective":
+                                        es = (a.get("empathy_span") or {}).get("focus_bias")
+                                        if es in empathy_direct_counts:
+                                                empathy_direct_counts[es] += 1
+                        for e, c in empathy_direct_counts.items():
+                                if c > 0:
+                                        push2(f"Empathy: {e.replace('_',' ').title()}", "Subjective", c, f"Empathy: {e.replace('_',' ').title()}")
+
+                        sunburst2_data = {
+                                "type": "sunburst",
+                                "labels": sb2_labels,
+                                "parents": sb2_parents,
+                                "values": sb2_values,
+                                "customdata": sb2_custom,
+                                "branchvalues": "total",
+                                "marker": {"line": {"width": 1}},
+                                "hovertemplate": "<b>%{label}</b><br>%{customdata}<extra></extra>",
+                                "maxdepth": 3
+                        }
+                        layout2 = {"margin": {"l": 0, "r": 0, "t": 30, "b": 0}, "paper_bgcolor": "#ffffff", "height": 540}
+                        fig2_json = _json.dumps({"data": [sunburst2_data], "layout": layout2})
+
+                        sunburst_html = f"""
+                        <div style=\"display:flex; gap:20px; flex-wrap:wrap;\">
+                            <div style=\"flex:1 1 480px; min-width:360px;\">
+                                <div id=\"sunburst_rt\" style=\"width:100%;height:540px;margin-bottom:12px;border:1px solid #e0e0e0;border-radius:4px;\"></div>
+                            </div>
+                            <div style=\"flex:1 1 480px; min-width:360px;\">
+                                <div id=\"sunburst_rt2\" style=\"width:100%;height:540px;margin-bottom:12px;border:1px solid #e0e0e0;border-radius:4px;\"></div>
+                            </div>
+                        </div>
+                        <script>
+                            (function(){{
+                                var spec1 = {fig_json};
+                                if (window.Plotly && document.getElementById('sunburst_rt')) {{
+                                    Plotly.newPlot('sunburst_rt', spec1.data, spec1.layout, {{displayModeBar:false}});
+                                }}
+                                var spec2 = {fig2_json};
+                                if (window.Plotly && document.getElementById('sunburst_rt2')) {{
+                                    Plotly.newPlot('sunburst_rt2', spec2.data, spec2.layout, {{displayModeBar:false}});
+                                }}
+                            }})();
+                        </script>
+                        """
         
         # Group by classification
         grouped = {"objective": [], "subjective": [], "intersubjective": [], "unknown": []}
