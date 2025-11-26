@@ -684,16 +684,30 @@ TEXT:
         axes = ["care", "fairness", "loyalty", "authority", "sanctity", "liberty"]
         labels = ["Care", "Fairness", "Loyalty", "Authority", "Sanctity", "Liberty"]
         intensities = [float((fnd.get(k) or {}).get("intensity", 0.0) or 0.0) for k in axes]
+        valences = [str((fnd.get(k) or {}).get("valence", "neutral") or "neutral").lower() for k in axes]
+        
+        # Map valence to color
+        def valence_color(v):
+            if v == "positive":
+                return "#28a745"
+            elif v == "negative":
+                return "#dc3545"
+            else:
+                return "#6c757d"
+        
+        marker_colors = [valence_color(v) for v in valences]
         # Close radar loop by repeating first value
+        marker_colors_closed = marker_colors + [marker_colors[0] if marker_colors else "#6c757d"]
+        
         radar_spec = {
             "data": [{
                 "type": "scatterpolar",
                 "r": intensities + [intensities[0] if intensities else 0],
                 "theta": labels + [labels[0]],
                 "fill": "toself",
-                "fillcolor": "rgba(0, 123, 255, 0.15)",
-                "line": {"color": "#007bff", "width": 2},
-                "marker": {"color": "#007bff", "size": 4},
+                "fillcolor": "rgba(108, 117, 125, 0.1)",
+                "line": {"color": "#6c757d", "width": 1.5},
+                "marker": {"color": marker_colors_closed, "size": 8, "line": {"width": 1, "color": "#fff"}},
                 "name": "Intensity"
             }],
             "layout": {
