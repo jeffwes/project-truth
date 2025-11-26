@@ -15,7 +15,7 @@ class GeminiClient:
             raise ValueError("GEMINI_API_KEY must be set in environment or passed to constructor")
         
         self.base_url = "https://generativelanguage.googleapis.com/v1beta/models"
-        self.default_model = "gemini-3-pro-preview"
+        self.default_model = "gemini-2.5-flash-lite"
     
     def generate(
         self,

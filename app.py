@@ -2,20 +2,13 @@
 The Resonance Engine
 Desktop application for analyzing media through academic frameworks.
 """
-import os
-import sys
-import time
-import hashlib
-import asyncio
+import os, sys, time, hashlib, asyncio
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
-# Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from shiny import App, ui, render, reactive
 import pandas as pd
 
-# Load environment variables
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -29,159 +22,54 @@ from src.moral_foundations import MoralFoundationsAnalyzer
 from src.tribal_resonance import TribalResonancePredictor
 from src.linguistic_analysis import LinguisticAnalyzer
 
-
-# UI Definition
 app_ui = ui.page_fluid(
     ui.tags.head(
         ui.tags.style("""
-            .foundation-card {
-                padding: 15px;
-                margin: 10px 0;
-                border-radius: 8px;
-                border-left: 4px solid #007bff;
-                background: #f8f9fa;
-            }
-            .tribe-card {
-                padding: 12px;
-                margin: 8px 0;
-                border-radius: 6px;
-                background: #fff;
-                border: 1px solid #dee2e6;
-            }
-            .score-bar {
-                height: 20px;
-                background: #007bff;
-                border-radius: 4px;
-                transition: width 0.3s;
-            }
-            .high-score { background: #28a745; }
-            .medium-score { background: #ffc107; }
-            .low-score { background: #6c757d; }
-            /* Loading overlay */
-            #loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(255,255,255,0.88); z-index:10000; }
-            .spinner { width:54px; height:54px; border:6px solid #e0e0e0; border-top-color:#007bff; border-radius:50%; animation: spin 0.8s linear infinite; margin-bottom:18px; }
+            .foundation-card { padding:15px; margin:10px 0; border-radius:8px; border-left:4px solid #007bff; background:#f8f9fa; }
+            .tribe-card { padding:12px; margin:8px 0; border-radius:6px; background:#fff; border:1px solid #dee2e6; }
+            .score-bar { height:20px; background:#007bff; border-radius:4px; transition:width .3s; }
+            .high-score { background:#28a745; }
+            .medium-score { background:#ffc107; }
+            .low-score { background:#6c757d; }
+            #loading-overlay { position:fixed; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(255,255,255,0.88); z-index:10000; }
+            .spinner { width:54px; height:54px; border:6px solid #e0e0e0; border-top-color:#007bff; border-radius:50%; animation: spin .8s linear infinite; margin-bottom:18px; }
             @keyframes spin { to { transform: rotate(360deg); } }
             .loading-msg { font-size:1.1em; color:#333; }
-        """)
-        ,
-        # Plotly for visualizations
+        """),
         ui.tags.script(src="https://cdn.plot.ly/plotly-2.35.2.min.js")
     ),
-    
     ui.panel_title("The Resonance Engine", "Deconstruct Persuasive Media"),
-    
     ui.layout_sidebar(
         ui.sidebar(
             ui.h4("Input"),
             ui.input_radio_buttons(
-                "input_mode",
-                "Content Source:",
-                {
-                    "text": "Paste Text",
-                    "url": "URL/Browser Tab",
-                    "youtube": "YouTube"
-                },
-                selected="text"
+                "input_mode", "Content Source:",
+                {"text": "Paste Text", "url": "URL/Browser Tab", "youtube": "YouTube"}, selected="text"
             ),
-            
             ui.output_ui("input_ui"),
-            
-            ui.input_slider(
-                "max_assertions",
-                "Max Assertions to Extract:",
-                min=5,
-                max=25,
-                value=12,
-                step=1
-            ),
-
-            ui.input_radio_buttons(
-                "analysis_mode",
-                "Analysis Depth:",
-                {"quick": "Quick (single prompt)", "deep": "Deep (full reasoning)"},
-                selected="deep"
-            ),
-
+            ui.input_slider("max_assertions", "Max Assertions to Extract:", min=5, max=25, value=12, step=1),
+            ui.input_radio_buttons("analysis_mode", "Analysis Depth:", {"quick": "Quick", "deep": "Deep"}, selected="deep"),
             ui.input_checkbox("use_cache", "Use caching (speeds repeat analyses)", True),
             ui.input_action_button("clear_cache", "Clear Cache", class_="btn-outline-secondary w-100"),
-            
-            ui.input_action_button(
-                "analyze_btn",
-                "Analyze Content",
-                class_="btn-primary btn-lg w-100"
-            ),
-            ui.br(),
-            
-            ui.hr(),
-
-            ui.tags.div(
-                ui.output_ui("status_display"),
-                style="margin-top: 10px;"
-            ),
-            
+            ui.input_action_button("analyze_btn", "Analyze Content", class_="btn-primary btn-lg w-100"),
+            ui.br(), ui.hr(),
+            ui.tags.div(ui.output_ui("status_display"), style="margin-top:10px;"),
             width=350
         ),
-        
         ui.navset_tab(
-            ui.nav_panel(
-                "Overview",
-                ui.div(
-                    ui.h3("Analysis Summary"),
-                    ui.output_ui("overview_ui"),
-                )
-            ),
-            
-            ui.nav_panel(
-                "Reality Taxonomy",
-                ui.div(
-                    ui.h3("Harari's Reality Classification"),
-                    ui.p("Classification of assertions by reality type: Objective, Subjective, or Intersubjective."),
-                    ui.output_ui("taxonomy_ui"),
-                )
-            ),
-            
-            ui.nav_panel(
-                "Moral Foundations",
-                ui.div(
-                    ui.h3("Moral Foundations Theory (Haidt)"),
-                    ui.p("Analysis of which psychological triggers are activated."),
-                    ui.output_ui("foundations_ui"),
-                )
-            ),
-            
-            ui.nav_panel(
-                "Tribal Resonance",
-                ui.div(
-                    ui.h3("Predicted Social Tribe Resonance"),
-                    ui.p("Which groups will find this content compelling."),
-                    ui.output_ui("tribes_ui"),
-                )
-            ),
-            
-            ui.nav_panel(
-                "Linguistic Analysis",
-                ui.div(
-                    ui.h3("Linguistic Forensics"),
-                    ui.p("Language pattern analysis for manipulation detection."),
-                    ui.output_ui("linguistic_ui"),
-                )
-            ),
-            
-            ui.nav_panel(
-                "Export",
-                ui.div(
-                    ui.h3("Export Analysis"),
-                    ui.p("Download analysis results in various formats."),
-                    ui.download_button("download_json", "Download JSON", class_="btn-success"),
-                    ui.br(), ui.br(),
-                    ui.download_button("download_csv", "Download CSV", class_="btn-info"),
-                    ui.br(), ui.br(),
-                    ui.output_text("export_info")
-                )
-            )
+            ui.nav_panel("Overview", ui.div(ui.h3("Analysis Summary"), ui.output_ui("overview_ui"))),
+            ui.nav_panel("Reality Taxonomy", ui.div(ui.h3("Harari's Reality Classification"), ui.p("Classification by reality type."), ui.output_ui("taxonomy_ui"))),
+            ui.nav_panel("Moral Foundations", ui.div(ui.h3("Moral Foundations (Haidt)"), ui.output_ui("foundations_ui"))),
+            ui.nav_panel("Tribal Resonance", ui.div(ui.h3("Predicted Social Tribe Resonance"), ui.output_ui("tribes_ui"))),
+            ui.nav_panel("Linguistic Analysis", ui.div(ui.h3("Linguistic Forensics"), ui.output_ui("linguistic_ui"))),
+            ui.nav_panel("Export", ui.div(
+                ui.h3("Export Analysis"),
+                ui.download_button("download_json", "Download JSON", class_="btn-success"), ui.br(), ui.br(),
+                ui.download_button("download_csv", "Download CSV", class_="btn-info"), ui.br(), ui.br(),
+                ui.output_text("export_info")
+            ))
         )
     ),
-    # Loading overlay output
     ui.output_ui("loading_overlay")
 )
 
@@ -828,6 +716,18 @@ TEXT:
         sources = []
         targets = []
         values = []
+        # Collect example sentences for each node label to use in tooltips
+        node_examples = {}
+        def add_example(label: str, text: str):
+            if not text:
+                return
+            arr = node_examples.setdefault(label, [])
+            # keep a few short examples, avoid duplicates
+            if text not in arr:
+                arr.append(text)
+                # cap examples per node to 3
+                if len(arr) > 3:
+                    del arr[0]
 
         # Top-level nodes
         n_obj = idx("Objective")
@@ -843,10 +743,17 @@ TEXT:
                     fact_counts[fc] += 1
         for k, v in fact_counts.items():
             if v > 0:
-                child = idx(f"Fact: {k.replace('_',' ').title()}")
+                child_label = f"Fact: {k.replace('_',' ').title()}"
+                child = idx(child_label)
                 sources.append(n_obj)
                 targets.append(child)
                 values.append(v)
+        # Attach examples for objective children
+        for a in assertions:
+            if a.get("classification") == "objective":
+                fc = (a.get("fact_check") or {}).get("status")
+                if fc in fact_counts:
+                    add_example(f"Fact: {fc.replace('_',' ').title()}", a.get("assertion", ""))
 
         # Intersubjective -> Stability -> Myth
         stability_keys = ["naturalized", "contested", "ambiguous"]
@@ -875,10 +782,20 @@ TEXT:
                 continue
             for m, c in myth_map.items():
                 if c > 0:
-                    m_node = idx(f"Myth: {m.replace('_',' ').title()}")
+                    m_label = f"Myth: {m.replace('_',' ').title()}"
+                    m_node = idx(m_label)
                     sources.append(s_node)
                     targets.append(m_node)
                     values.append(c)
+        # Attach examples for intersubjective children
+        for a in assertions:
+            if a.get("classification") == "intersubjective":
+                si = (a.get("stability_index") or {}).get("status")
+                mt = (a.get("myth_taxonomy") or {}).get("category")
+                if si in stability_keys:
+                    add_example(f"Stability: {si.title()}", a.get("assertion", ""))
+                if mt in myth_keys:
+                    add_example(f"Myth: {mt.replace('_',' ').title()}", a.get("assertion", ""))
 
         # Subjective -> Arousal -> Empathy
         arousal_keys = ["high", "neutral", "low"]
@@ -907,33 +824,101 @@ TEXT:
                 continue
             for e_key, c in emp_map.items():
                 if c > 0:
-                    e_node = idx(f"Empathy: {e_key.replace('_',' ').title()}")
+                    e_label = f"Empathy: {e_key.replace('_',' ').title()}"
+                    e_node = idx(e_label)
                     sources.append(a_node)
                     targets.append(e_node)
                     values.append(c)
+        # Attach examples for subjective children
+        for a in assertions:
+            if a.get("classification") == "subjective":
+                va = (a.get("viral_arousal") or {}).get("category")
+                es = (a.get("empathy_span") or {}).get("focus_bias")
+                if va in arousal_keys:
+                    add_example(f"Arousal: {va.title()}", a.get("assertion", ""))
+                if es in empathy_keys:
+                    add_example(f"Empathy: {es.replace('_',' ').title()}", a.get("assertion", ""))
 
-        # Build Sankey chart UI component
-        sankey_html = ""
+        # Build Sunburst chart UI component (explicit hierarchy root -> classification -> subcategories)
+        sunburst_html = ""
         if values:
-            sankey_data = {
-                "type": "sankey",
-                "orientation": "h",
-                "node": {"label": labels, "pad": 15, "thickness": 20},
-                "link": {"source": sources, "target": targets, "value": values}
+            sb_labels = ["Reality"]
+            sb_parents = [""]
+            sb_values = [sum(values)]
+            sb_customdata = ["\n".join(node_examples.get("Reality", [])) or "Overall taxonomy"]
+
+            def push(label, parent, value, examples_key=None):
+                sb_labels.append(label)
+                sb_parents.append(parent)
+                sb_values.append(value)
+                examples = node_examples.get(examples_key or label, [])
+                sb_customdata.append("\n".join(examples) or label)
+
+            # Classification counts
+            class_counts = {"Objective": 0, "Intersubjective": 0, "Subjective": 0}
+            for a in assertions:
+                c = a.get("classification")
+                if c == "objective":
+                    class_counts["Objective"] += 1
+                elif c == "intersubjective":
+                    class_counts["Intersubjective"] += 1
+                elif c == "subjective":
+                    class_counts["Subjective"] += 1
+            for label, cnt in class_counts.items():
+                if cnt > 0:
+                    push(label, "Reality", cnt, label)
+
+            # Objective children
+            for k, v in fact_counts.items():
+                if v > 0:
+                    push(f"Fact: {k.replace('_',' ').title()}", "Objective", v)
+
+            # Intersubjective children
+            for st, count in st_totals.items():
+                if count > 0:
+                    st_label = f"Stability: {st.title()}"
+                    push(st_label, "Intersubjective", count)
+                    for m, c in joint_st_myth[st].items():
+                        if c > 0:
+                            push(f"Myth: {m.replace('_',' ').title()}", st_label, c)
+
+            # Subjective children
+            for a_key, count in ar_totals.items():
+                if count > 0:
+                    a_label = f"Arousal: {a_key.title()}"
+                    push(a_label, "Subjective", count)
+                    for e_key, c in joint_ar_emp[a_key].items():
+                        if c > 0:
+                            push(f"Empathy: {e_key.replace('_',' ').title()}", a_label, c)
+
+            sunburst_data = {
+                "type": "sunburst",
+                "labels": sb_labels,
+                "parents": sb_parents,
+                "values": sb_values,
+                "customdata": sb_customdata,
+                "branchvalues": "total",
+                "marker": {"line": {"width": 1}},
+                "hovertemplate": "<b>%{label}</b><br>%{customdata}<extra></extra>",
+                "maxdepth": 3
             }
-            layout = {"margin": {"l": 10, "r": 10, "t": 10, "b": 10}, "paper_bgcolor": "#ffffff"}
-            fig_json = _json.dumps({"data": [sankey_data], "layout": layout})
-            sankey_html = f"""
-            <div id="sankey_rt" style="width:100%;height:520px;margin-bottom:24px;"></div>
+            layout = {
+                "margin": {"l": 0, "r": 0, "t": 30, "b": 0},
+                "paper_bgcolor": "#ffffff",
+                "height": 540
+            }
+            fig_json = _json.dumps({"data": [sunburst_data], "layout": layout})
+            sunburst_html = f"""
+            <div id="sunburst_rt" style="width:100%;height:540px;margin-bottom:24px;border:1px solid #e0e0e0;border-radius:4px;"></div>
             <script>
               (function(){{
                 var spec = {fig_json};
-                if (window.Plotly && document.getElementById('sankey_rt')) {{
-                  Plotly.newPlot('sankey_rt', spec.data, spec.layout, {{displayModeBar:false}});
+                if (window.Plotly && document.getElementById('sunburst_rt')) {{
+                  Plotly.newPlot('sunburst_rt', spec.data, spec.layout, {{displayModeBar:false}});
                 }}
               }})();
             </script>
-        """
+            """
         
         # Group by classification
         grouped = {"objective": [], "subjective": [], "intersubjective": [], "unknown": []}
@@ -1049,9 +1034,9 @@ TEXT:
                 style="margin-bottom:12px;"
             ))
         
-        # Prepend Sankey chart if available
-        if sankey_html:
-            sections.insert(0, ui.HTML(sankey_html))
+        # Prepend Sunburst chart if available
+        if sunburst_html:
+            sections.insert(0, ui.HTML(sunburst_html))
         
         return ui.div(*sections)
     
