@@ -839,9 +839,11 @@ TEXT:
                 if es in empathy_keys:
                     add_example(f"Empathy: {es.replace('_',' ').title()}", a.get("assertion", ""))
 
-        # Build Sunburst chart UI component (explicit hierarchy root -> classification -> subcategories)
-        sunburst_html = ""
+        # Build two Sunburst charts side-by-side
+        sunburst_html_1 = ""
+        sunburst_html_2 = ""
         if values:
+            # Chart 1: original (Arousal & Stability outer layer)
             sb_labels = ["Reality"]
             sb_parents = [""]
             sb_values = [sum(values)]
@@ -891,7 +893,7 @@ TEXT:
                         if c > 0:
                             push(f"Empathy: {e_key.replace('_',' ').title()}", a_label, c)
 
-            sunburst_data = {
+            sunburst_data_1 = {
                 "type": "sunburst",
                 "labels": sb_labels,
                 "parents": sb_parents,
@@ -902,91 +904,123 @@ TEXT:
                 "hovertemplate": "<b>%{label}</b><br>%{customdata}<extra></extra>",
                 "maxdepth": 3
             }
-            layout = {
+            layout_1 = {
                 "margin": {"l": 0, "r": 0, "t": 30, "b": 0},
                 "paper_bgcolor": "#ffffff",
                 "height": 540
             }
-                        fig_json = _json.dumps({"data": [sunburst_data], "layout": layout})
-                        # Build second (direct) sunburst: myth/empathy directly under classification
-                        sb2_labels = ["Reality (Direct)"]
-                        sb2_parents = [""]
-                        sb2_values = [sum(values)]
-                        sb2_custom = ["Direct counts by myth & empathy bias"]
+            fig_json_1 = _json.dumps({"data": [sunburst_data_1], "layout": layout_1})
+            sunburst_html_1 = f"""
+            <div id=\"sunburst_rt\" style=\"width:100%;height:540px;margin-bottom:24px;border:1px solid #e0e0e0;border-radius:4px;\"></div>
+            <script>
+              (function(){{
+                var spec = {fig_json_1};
+                if (window.Plotly && document.getElementById('sunburst_rt')) {{
+                  Plotly.newPlot('sunburst_rt', spec.data, spec.layout, {{displayModeBar:false}});
+                }}
+              }})();
+            </script>
+            """
 
-                        def push2(label, parent, value, examples_key=None):
-                                sb2_labels.append(label)
-                                sb2_parents.append(parent)
-                                sb2_values.append(value)
-                                ex = node_examples.get(examples_key or label, [])
-                                sb2_custom.append("\n".join(ex) or label)
+            # Chart 2: empathy bias & myth outer layer
+            sb2_labels = ["Reality"]
+            sb2_parents = [""]
+            sb2_values = [sum(values)]
+            sb2_customdata = ["\n".join(node_examples.get("Reality", [])) or "Overall taxonomy"]
 
-                        for label, cnt in class_counts.items():
-                                if cnt > 0:
-                                        push2(label, "Reality (Direct)", cnt, label)
+            def push2(label, parent, value, examples_key=None):
+                sb2_labels.append(label)
+                sb2_parents.append(parent)
+                sb2_values.append(value)
+                examples = node_examples.get(examples_key or label, [])
+                sb2_customdata.append("\n".join(examples) or label)
 
-                        for k, v in fact_counts.items():
-                                if v > 0:
-                                        push2(f"Fact: {k.replace('_',' ').title()}", "Objective", v)
+            # Classification counts
+            for label, cnt in class_counts.items():
+                if cnt > 0:
+                    push2(label, "Reality", cnt, label)
 
-                        # Myth directly under Intersubjective
-                        myth_direct_counts = {m: 0 for m in myth_keys}
-                        for a in assertions:
-                                if a.get("classification") == "intersubjective":
-                                        mt = (a.get("myth_taxonomy") or {}).get("category")
-                                        if mt in myth_direct_counts:
-                                                myth_direct_counts[mt] += 1
-                        for m, c in myth_direct_counts.items():
-                                if c > 0:
-                                        push2(f"Myth: {m.replace('_',' ').title()}", "Intersubjective", c, f"Myth: {m.replace('_',' ').title()}")
+            # Objective children (repeat same layers or blank)
+            for k, v in fact_counts.items():
+                if v > 0:
+                    push2(f"Fact: {k.replace('_',' ').title()}", "Objective", v)
 
-                        # Empathy bias directly under Subjective
-                        empathy_direct_counts = {e: 0 for e in empathy_keys}
-                        for a in assertions:
-                                if a.get("classification") == "subjective":
-                                        es = (a.get("empathy_span") or {}).get("focus_bias")
-                                        if es in empathy_direct_counts:
-                                                empathy_direct_counts[es] += 1
-                        for e, c in empathy_direct_counts.items():
-                                if c > 0:
-                                        push2(f"Empathy: {e.replace('_',' ').title()}", "Subjective", c, f"Empathy: {e.replace('_',' ').title()}")
+            # Intersubjective children (myth outer layer)
+            # Reality → Intersubjective → Myth (outer) → Stability (inner)
+            myth_totals = {m: 0 for m in myth_keys}
+            joint_myth_st = {m: {s: 0 for s in stability_keys} for m in myth_keys}
+            for a in assertions:
+                if a.get("classification") == "intersubjective":
+                    si = (a.get("stability_index") or {}).get("status")
+                    mt = (a.get("myth_taxonomy") or {}).get("category")
+                    if mt in myth_keys:
+                        myth_totals[mt] += 1
+                        if si in stability_keys:
+                            joint_myth_st[mt][si] += 1
+            myth_nodes = {}
+            for m, count in myth_totals.items():
+                if count > 0:
+                    m_label = f"Myth: {m.replace('_',' ').title()}"
+                    myth_node = m_label
+                    push2(m_label, "Intersubjective", count)
+                    myth_nodes[m] = myth_node
+                    for s, c in joint_myth_st[m].items():
+                        if c > 0:
+                            s_label = f"Stability: {s.title()}"
+                            push2(s_label, m_label, c)
 
-                        sunburst2_data = {
-                                "type": "sunburst",
-                                "labels": sb2_labels,
-                                "parents": sb2_parents,
-                                "values": sb2_values,
-                                "customdata": sb2_custom,
-                                "branchvalues": "total",
-                                "marker": {"line": {"width": 1}},
-                                "hovertemplate": "<b>%{label}</b><br>%{customdata}<extra></extra>",
-                                "maxdepth": 3
-                        }
-                        layout2 = {"margin": {"l": 0, "r": 0, "t": 30, "b": 0}, "paper_bgcolor": "#ffffff", "height": 540}
-                        fig2_json = _json.dumps({"data": [sunburst2_data], "layout": layout2})
+            # Subjective children (empathy bias outer layer)
+            # Reality → Subjective → Empathy Bias (outer) → Arousal (inner)
+            emp_totals = {e: 0 for e in empathy_keys}
+            joint_emp_ar = {e: {a: 0 for a in arousal_keys} for e in empathy_keys}
+            for a in assertions:
+                if a.get("classification") == "subjective":
+                    va = (a.get("viral_arousal") or {}).get("category")
+                    es = (a.get("empathy_span") or {}).get("focus_bias")
+                    if es in empathy_keys:
+                        emp_totals[es] += 1
+                        if va in arousal_keys:
+                            joint_emp_ar[es][va] += 1
+            emp_nodes = {}
+            for e, count in emp_totals.items():
+                if count > 0:
+                    e_label = f"Empathy Bias: {e.replace('_',' ').title()}"
+                    emp_node = e_label
+                    push2(e_label, "Subjective", count)
+                    emp_nodes[e] = emp_node
+                    for a, c in joint_emp_ar[e].items():
+                        if c > 0:
+                            a_label = f"Arousal: {a.title()}"
+                            push2(a_label, e_label, c)
 
-                        sunburst_html = f"""
-                        <div style=\"display:flex; gap:20px; flex-wrap:wrap;\">
-                            <div style=\"flex:1 1 480px; min-width:360px;\">
-                                <div id=\"sunburst_rt\" style=\"width:100%;height:540px;margin-bottom:12px;border:1px solid #e0e0e0;border-radius:4px;\"></div>
-                            </div>
-                            <div style=\"flex:1 1 480px; min-width:360px;\">
-                                <div id=\"sunburst_rt2\" style=\"width:100%;height:540px;margin-bottom:12px;border:1px solid #e0e0e0;border-radius:4px;\"></div>
-                            </div>
-                        </div>
-                        <script>
-                            (function(){{
-                                var spec1 = {fig_json};
-                                if (window.Plotly && document.getElementById('sunburst_rt')) {{
-                                    Plotly.newPlot('sunburst_rt', spec1.data, spec1.layout, {{displayModeBar:false}});
-                                }}
-                                var spec2 = {fig2_json};
-                                if (window.Plotly && document.getElementById('sunburst_rt2')) {{
-                                    Plotly.newPlot('sunburst_rt2', spec2.data, spec2.layout, {{displayModeBar:false}});
-                                }}
-                            }})();
-                        </script>
-                        """
+            sunburst_data_2 = {
+                "type": "sunburst",
+                "labels": sb2_labels,
+                "parents": sb2_parents,
+                "values": sb2_values,
+                "customdata": sb2_customdata,
+                "branchvalues": "total",
+                "marker": {"line": {"width": 1}},
+                "hovertemplate": "<b>%{label}</b><br>%{customdata}<extra></extra>",
+                "maxdepth": 3
+            }
+            layout_2 = {
+                "margin": {"l": 0, "r": 0, "t": 30, "b": 0},
+                "paper_bgcolor": "#ffffff",
+                "height": 540
+            }
+            fig_json_2 = _json.dumps({"data": [sunburst_data_2], "layout": layout_2})
+            sunburst_html_2 = f"""
+            <div id=\"sunburst_rt2\" style=\"width:100%;height:540px;margin-bottom:24px;border:1px solid #e0e0e0;border-radius:4px;\"></div>
+            <script>
+              (function(){{
+                var spec = {fig_json_2};
+                if (window.Plotly && document.getElementById('sunburst_rt2')) {{
+                  Plotly.newPlot('sunburst_rt2', spec.data, spec.layout, {{displayModeBar:false}});
+                }}
+              }})();
+            </script>
+            """
         
         # Group by classification
         grouped = {"objective": [], "subjective": [], "intersubjective": [], "unknown": []}
@@ -1102,9 +1136,17 @@ TEXT:
                 style="margin-bottom:12px;"
             ))
         
-        # Prepend Sunburst chart if available
-        if sunburst_html:
-            sections.insert(0, ui.HTML(sunburst_html))
+        # Prepend both Sunburst charts side-by-side if available
+        if sunburst_html_1 and sunburst_html_2:
+            chart_row = ui.HTML(f"""
+            <div style='display:flex;flex-direction:row;gap:24px;'>
+              <div style='flex:1'>{sunburst_html_1}</div>
+              <div style='flex:1'>{sunburst_html_2}</div>
+            </div>
+            """)
+            sections.insert(0, chart_row)
+        elif sunburst_html_1:
+            sections.insert(0, ui.HTML(sunburst_html_1))
         
         return ui.div(*sections)
     
