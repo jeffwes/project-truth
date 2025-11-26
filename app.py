@@ -853,8 +853,95 @@ TEXT:
                 sb_labels.append(label)
                 sb_parents.append(parent)
                 sb_values.append(value)
-                examples = node_examples.get(examples_key or label, [])
-                sb_customdata.append("\n".join(examples) or label)
+                # Custom tooltip logic
+                if parent == "Objective":
+                    # Show count only for fact nodes
+                    sb_customdata.append(f"Count: {value}")
+                elif label.startswith("Empathy"):
+                    # Show empathy bias details
+                    sides = []
+                    entities = []
+                    for a in assertions:
+                        if a.get("classification") == "subjective":
+                            es = (a.get("empathy_span") or {})
+                            if es.get("focus_bias") and label.endswith(es.get("focus_bias").replace('_',' ').title()):
+                                sides += es.get("sides_described", [])
+                                ent = es.get("entities_with_emotion")
+                                if ent:
+                                    entities.append(str(ent))
+                    tip = ""
+                    if sides:
+                        tip += "Sides: " + ", ".join(sides)
+                    if entities:
+                        tip += "\nEntities: " + ", ".join(entities)
+                    sb_customdata.append(tip or label)
+                elif label.startswith("Arousal"):
+                    # Show arousal details
+                    scores = []
+                    tags = []
+                    for a in assertions:
+                        if a.get("classification") == "subjective":
+                            va = (a.get("viral_arousal") or {})
+                            if va.get("category") and label.endswith(va.get("category").title()):
+                                score = va.get("arousal_score")
+                                if score is not None:
+                                    scores.append(f"{va.get('category').title()} {int(score*100)}%")
+                                tags += va.get("emotion_tags", [])
+                    tip = ""
+                    if scores:
+                        tip += ", ".join(scores)
+                    if tags:
+                        tip += "\nTags: " + ", ".join(tags)
+                    sb_customdata.append(tip or label)
+                elif label.startswith("Stability"):
+                    # Show stability details
+                    statuses = []
+                    cues = []
+                    reasons = []
+                    for a in assertions:
+                        if a.get("classification") == "intersubjective":
+                            si = (a.get("stability_index") or {})
+                            if si.get("status") and label.endswith(si.get("status").title()):
+                                statuses.append(si.get("status"))
+                                cues += si.get("cues", [])
+                                reason = si.get("reasoning")
+                                if reason:
+                                    reasons.append(reason)
+                    tip = ""
+                    if statuses:
+                        tip += "Status: " + ", ".join(statuses)
+                    if cues:
+                        tip += "\nCues: " + ", ".join(cues)
+                    if reasons:
+                        tip += "\nReasoning: " + " | ".join(reasons)
+                    sb_customdata.append(tip or label)
+                elif label.startswith("Myth"):
+                    # Show myth details
+                    categories = []
+                    confidences = []
+                    reasons = []
+                    for a in assertions:
+                        if a.get("classification") == "intersubjective":
+                            mt = (a.get("myth_taxonomy") or {})
+                            if mt.get("category") and label.endswith(mt.get("category").replace('_',' ').title()):
+                                categories.append(mt.get("category"))
+                                conf = mt.get("confidence")
+                                if conf is not None:
+                                    confidences.append(f"{int(conf*100)}%")
+                                reason = mt.get("reasoning")
+                                if reason:
+                                    reasons.append(reason)
+                    tip = ""
+                    if categories:
+                        tip += "Category: " + ", ".join(categories)
+                    if confidences:
+                        tip += "\nConfidence: " + ", ".join(confidences)
+                    if reasons:
+                        tip += "\nReasoning: " + " | ".join(reasons)
+                    sb_customdata.append(tip or label)
+                else:
+                    examples = node_examples.get(examples_key or label, [])
+                    sb_customdata.append("\n".join(examples) or label)
 
             # Classification counts
             class_counts = {"Objective": 0, "Intersubjective": 0, "Subjective": 0}
@@ -917,6 +1004,15 @@ TEXT:
                 var spec = {fig_json_1};
                 if (window.Plotly && document.getElementById('sunburst_rt')) {{
                   Plotly.newPlot('sunburst_rt', spec.data, spec.layout, {{displayModeBar:false}});
+                  document.getElementById('sunburst_rt').on('plotly_click', function(e) {{
+                    var pt = e.points[0];
+                    var label = pt.label;
+                    var details = pt.customdata;
+                    var modal = document.getElementById('sunburst_modal');
+                    var modal_content = document.getElementById('sunburst_modal_content');
+                    modal_content.innerHTML = '<h4>' + label + '</h4><pre style="white-space:pre-wrap;font-size:1em;">' + details + '</pre>';
+                    modal.style.display = 'block';
+                  }});
                 }}
               }})();
             </script>
@@ -932,8 +1028,90 @@ TEXT:
                 sb2_labels.append(label)
                 sb2_parents.append(parent)
                 sb2_values.append(value)
-                examples = node_examples.get(examples_key or label, [])
-                sb2_customdata.append("\n".join(examples) or label)
+                # Custom tooltip logic for second chart
+                if parent == "Objective":
+                    sb2_customdata.append(f"Count: {value}")
+                elif label.startswith("Empathy Bias"):
+                    sides = []
+                    entities = []
+                    for a in assertions:
+                        if a.get("classification") == "subjective":
+                            es = (a.get("empathy_span") or {})
+                            if es.get("focus_bias") and label.endswith(es.get("focus_bias").replace('_',' ').title()):
+                                sides += es.get("sides_described", [])
+                                ent = es.get("entities_with_emotion")
+                                if ent:
+                                    entities.append(str(ent))
+                    tip = ""
+                    if sides:
+                        tip += "Sides: " + ", ".join(sides)
+                    if entities:
+                        tip += "\nEntities: " + ", ".join(entities)
+                    sb2_customdata.append(tip or label)
+                elif label.startswith("Arousal"):
+                    scores = []
+                    tags = []
+                    for a in assertions:
+                        if a.get("classification") == "subjective":
+                            va = (a.get("viral_arousal") or {})
+                            if va.get("category") and label.endswith(va.get("category").title()):
+                                score = va.get("arousal_score")
+                                if score is not None:
+                                    scores.append(f"{va.get('category').title()} {int(score*100)}%")
+                                tags += va.get("emotion_tags", [])
+                    tip = ""
+                    if scores:
+                        tip += ", ".join(scores)
+                    if tags:
+                        tip += "\nTags: " + ", ".join(tags)
+                    sb2_customdata.append(tip or label)
+                elif label.startswith("Stability"):
+                    statuses = []
+                    cues = []
+                    reasons = []
+                    for a in assertions:
+                        if a.get("classification") == "intersubjective":
+                            si = (a.get("stability_index") or {})
+                            if si.get("status") and label.endswith(si.get("status").title()):
+                                statuses.append(si.get("status"))
+                                cues += si.get("cues", [])
+                                reason = si.get("reasoning")
+                                if reason:
+                                    reasons.append(reason)
+                    tip = ""
+                    if statuses:
+                        tip += "Status: " + ", ".join(statuses)
+                    if cues:
+                        tip += "\nCues: " + ", ".join(cues)
+                    if reasons:
+                        tip += "\nReasoning: " + " | ".join(reasons)
+                    sb2_customdata.append(tip or label)
+                elif label.startswith("Myth"):
+                    categories = []
+                    confidences = []
+                    reasons = []
+                    for a in assertions:
+                        if a.get("classification") == "intersubjective":
+                            mt = (a.get("myth_taxonomy") or {})
+                            if mt.get("category") and label.endswith(mt.get("category").replace('_',' ').title()):
+                                categories.append(mt.get("category"))
+                                conf = mt.get("confidence")
+                                if conf is not None:
+                                    confidences.append(f"{int(conf*100)}%")
+                                reason = mt.get("reasoning")
+                                if reason:
+                                    reasons.append(reason)
+                    tip = ""
+                    if categories:
+                        tip += "Category: " + ", ".join(categories)
+                    if confidences:
+                        tip += "\nConfidence: " + ", ".join(confidences)
+                    if reasons:
+                        tip += "\nReasoning: " + " | ".join(reasons)
+                    sb2_customdata.append(tip or label)
+                else:
+                    examples = node_examples.get(examples_key or label, [])
+                    sb2_customdata.append("\n".join(examples) or label)
 
             # Classification counts
             for label, cnt in class_counts.items():
@@ -1017,6 +1195,15 @@ TEXT:
                 var spec = {fig_json_2};
                 if (window.Plotly && document.getElementById('sunburst_rt2')) {{
                   Plotly.newPlot('sunburst_rt2', spec.data, spec.layout, {{displayModeBar:false}});
+                  document.getElementById('sunburst_rt2').on('plotly_click', function(e) {{
+                    var pt = e.points[0];
+                    var label = pt.label;
+                    var details = pt.customdata;
+                    var modal = document.getElementById('sunburst_modal');
+                    var modal_content = document.getElementById('sunburst_modal_content');
+                    modal_content.innerHTML = '<h4>' + label + '</h4><pre style="white-space:pre-wrap;font-size:1em;">' + details + '</pre>';
+                    modal.style.display = 'block';
+                  }});
                 }}
               }})();
             </script>
@@ -1143,10 +1330,22 @@ TEXT:
               <div style='flex:1'>{sunburst_html_1}</div>
               <div style='flex:1'>{sunburst_html_2}</div>
             </div>
+            <div id='sunburst_modal' onclick="if(event.target.id==='sunburst_modal'){{this.style.display='none'}}" style='display:none;position:fixed;z-index:9999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);cursor:pointer;'>
+              <div id='sunburst_modal_content' style='background:#fff;max-width:600px;max-height:80vh;overflow-y:auto;margin:80px auto;padding:32px;border-radius:8px;box-shadow:0 2px 16px #333;position:relative;cursor:default;'>
+                <button onclick="document.getElementById('sunburst_modal').style.display='none';event.stopPropagation();" style='position:absolute;top:12px;right:16px;font-size:1.5em;background:none;border:none;cursor:pointer;color:#666;line-height:1;'>×</button>
+              </div>
+            </div>
             """)
             sections.insert(0, chart_row)
         elif sunburst_html_1:
-            sections.insert(0, ui.HTML(sunburst_html_1))
+            chart_row = sunburst_html_1 + """
+            <div id='sunburst_modal' onclick="if(event.target.id==='sunburst_modal'){{this.style.display='none'}}" style='display:none;position:fixed;z-index:9999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.4);cursor:pointer;'>
+              <div id='sunburst_modal_content' style='background:#fff;max-width:600px;max-height:80vh;overflow-y:auto;margin:80px auto;padding:32px;border-radius:8px;box-shadow:0 2px 16px #333;position:relative;cursor:default;'>
+                <button onclick="document.getElementById('sunburst_modal').style.display='none';event.stopPropagation();" style='position:absolute;top:12px;right:16px;font-size:1.5em;background:none;border:none;cursor:pointer;color:#666;line-height:1;'>×</button>
+              </div>
+            </div>
+            """
+            sections.insert(0, ui.HTML(chart_row))
         
         return ui.div(*sections)
     
