@@ -616,63 +616,261 @@ TEXT:
         if not results:
             return ui.p("No analysis yet. Enter content and click 'Analyze Content'.")
         
-        taxonomy = results["taxonomy"]
-        foundations = results["foundations"]
-        tribes = results["tribes"]
+        taxonomy = results.get("taxonomy", {})
+        foundations = results.get("foundations", {})
+        tribes = results.get("tribes", {})
+        linguistic = results.get("linguistic") or {}
         perf = perf_metrics.get() or {}
         content_summary = results.get("content_summary") or "(summary unavailable)"
-        
-        # Build summary cards
+
+        import json as _json
+
         cards = []
-        # Content summary card (placed first)
+
+        # 0) Content Summary
         cards.append(ui.div(
             ui.h4("Content Summary"),
-            ui.p(content_summary),
+            ui.p(content_summary, style="font-size:0.95em; color:#333;"),
             class_="foundation-card"
         ))
-        
-        # Reality taxonomy summary
-        summary = taxonomy.get("summary", {})
-        if summary:
-            total = summary.get("total", 0)
-            obj = summary.get("objective", 0)
-            subj = summary.get("subjective", 0)
-            inter = summary.get("intersubjective", 0)
-            
-            cards.append(ui.div(
-                ui.h4("Reality Distribution"),
-                ui.p(f"Total assertions: {total}"),
-                ui.tags.ul(
-                    ui.tags.li(f"Objective: {obj} ({obj/total*100:.0f}%)" if total > 0 else "Objective: 0"),
-                    ui.tags.li(f"Subjective: {subj} ({subj/total*100:.0f}%)" if total > 0 else "Subjective: 0"),
-                    ui.tags.li(f"Intersubjective: {inter} ({inter/total*100:.0f}%)" if total > 0 else "Intersubjective: 0")
-                ),
-                class_="foundation-card"
-            ))
 
-        # Note: additional enrichment summaries are intentionally omitted from Overview per request.
-        
-        # Moral foundations summary
-        profile = foundations.get("overall_profile", "")
-        if profile:
-            cards.append(ui.div(
-                ui.h4("Moral Signature"),
-                ui.p(profile),
-                class_="foundation-card"
-            ))
-        
-        # Tribal resonance summary
-        signature = tribes.get("tribal_signature", "")
-        polarization = tribes.get("polarization_risk", "unknown")
-        if signature:
-            cards.append(ui.div(
-                ui.h4("Tribal Appeal"),
-                ui.p(signature),
-                ui.p(f"Polarization Risk: {polarization.title()}", style=f"color: {'red' if polarization == 'high' else 'orange' if polarization == 'medium' else 'green'};"),
-                class_="foundation-card"
-            ))
-        
-        # Performance card
+        # 1) Reality Mix Donut
+        summary = taxonomy.get("summary", {}) or {}
+        total = int(summary.get("total", 0) or 0)
+        obj = int(summary.get("objective", 0) or 0)
+        subj = int(summary.get("subjective", 0) or 0)
+        inter = int(summary.get("intersubjective", 0) or 0)
+        if total > 0 and (obj + subj + inter) > 0:
+            donut_spec = {
+                "data": [{
+                    "type": "pie",
+                    "labels": ["Objective", "Subjective", "Intersubjective"],
+                    "values": [obj, subj, inter],
+                    "hole": 0.6,
+                    "marker": {"colors": ["#007bff", "#6c757d", "#17a2b8"]},
+                    "textinfo": "label+percent",
+                    "hoverinfo": "label+value+percent"
+                }],
+                "layout": {
+                    "margin": {"l": 10, "r": 10, "t": 10, "b": 10},
+                    "height": 220,
+                    "showlegend": False,
+                    "paper_bgcolor": "#f8f9fa"
+                }
+            }
+            donut_html = f"""
+            <div id=\"overview_reality_donut\" style=\"width:100%;height:220px;\"></div>
+            <script>
+              (function(){{
+                var spec = {_json.dumps(donut_spec)};
+                if (window.Plotly && document.getElementById('overview_reality_donut')) {{
+                  Plotly.newPlot('overview_reality_donut', spec.data, spec.layout, {{displayModeBar:false}});
+                }}
+              }})();
+            </script>
+            """
+        else:
+            donut_html = "<div style='color:#666;font-size:0.9em;'>No assertions detected.</div>"
+
+        cards.append(ui.div(
+            ui.h4("Reality Distribution"),
+            ui.p(f"Total assertions: {total}", style="margin-top:-6px; color:#555;"),
+            ui.HTML(donut_html),
+            class_="foundation-card"
+        ))
+
+        # 2) Moral Foundations Mini Radar
+        fnd = foundations.get("foundations", {}) or {}
+        axes = ["care", "fairness", "loyalty", "authority", "sanctity", "liberty"]
+        labels = ["Care", "Fairness", "Loyalty", "Authority", "Sanctity", "Liberty"]
+        intensities = [float((fnd.get(k) or {}).get("intensity", 0.0) or 0.0) for k in axes]
+        # Close radar loop by repeating first value
+        radar_spec = {
+            "data": [{
+                "type": "scatterpolar",
+                "r": intensities + [intensities[0] if intensities else 0],
+                "theta": labels + [labels[0]],
+                "fill": "toself",
+                "fillcolor": "rgba(0, 123, 255, 0.15)",
+                "line": {"color": "#007bff", "width": 2},
+                "marker": {"color": "#007bff", "size": 4},
+                "name": "Intensity"
+            }],
+            "layout": {
+                "polar": {"radialaxis": {"visible": True, "range": [0, 1]}},
+                "margin": {"l": 40, "r": 40, "t": 20, "b": 20},
+                "height": 240,
+                "paper_bgcolor": "#f8f9fa",
+                "showlegend": False
+            }
+        }
+        radar_html = f"""
+        <div id=\"overview_moral_radar\" style=\"width:100%;height:240px;\"></div>
+        <script>
+          (function(){{
+            var spec = {_json.dumps(radar_spec)};
+            if (window.Plotly && document.getElementById('overview_moral_radar')) {{
+              Plotly.newPlot('overview_moral_radar', spec.data, spec.layout, {{displayModeBar:false}});
+            }}
+          }})();
+        </script>
+        """
+        cards.append(ui.div(
+            ui.h4("Moral Foundations (Intensity)"),
+            ui.HTML(radar_html),
+            class_="foundation-card"
+        ))
+
+        # 3) Top-3 Tribal Resonance Bars
+        preds = tribes.get("predictions", []) or []
+        try:
+            top3 = sorted(preds, key=lambda x: x.get("resonance_score", 0.0), reverse=True)[:3]
+        except Exception:
+            top3 = []
+        tribe_names = [t.get("name", "unknown") for t in top3]
+        tribe_scores = [float(t.get("resonance_score", 0.0) or 0.0) for t in top3]
+        sentiments = [str(t.get("sentiment", "neutral") or "neutral").lower() for t in top3]
+        colors = [("#28a745" if s == "positive" else "#6c757d" if s == "neutral" else "#dc3545") for s in sentiments]
+        if top3:
+            tribe_bar = {
+                "data": [{
+                    "type": "bar",
+                    "orientation": "h",
+                    "y": tribe_names[::-1],
+                    "x": tribe_scores[::-1],
+                    "marker": {"color": colors[::-1]},
+                    "text": [f"{v:.2f}" for v in tribe_scores[::-1]],
+                    "textposition": "outside"
+                }],
+                "layout": {
+                    "margin": {"l": 200, "r": 40, "t": 10, "b": 30},
+                    "height": 200,
+                    "xaxis": {"title": "Resonance", "range": [0, 1]},
+                    "paper_bgcolor": "#f8f9fa",
+                    "showlegend": False
+                }
+            }
+            tribe_bar_html = f"""
+            <div id=\"overview_tribe_top3\" style=\"width:100%;height:200px;\"></div>
+            <script>
+              (function(){{
+                var spec = {_json.dumps(tribe_bar)};
+                if (window.Plotly && document.getElementById('overview_tribe_top3')) {{
+                  Plotly.newPlot('overview_tribe_top3', spec.data, spec.layout, {{displayModeBar:false}});
+                }}
+              }})();
+            </script>
+            """
+        else:
+            tribe_bar_html = "<div style='color:#666;font-size:0.9em;'>No tribe predictions.</div>"
+
+        pol_risk = tribes.get("polarization_risk", "unknown")
+        pol_color = 'red' if pol_risk == 'high' else 'orange' if pol_risk == 'medium' else '#28a745'
+
+        cards.append(ui.div(
+            ui.h4("Top Tribal Resonance"),
+            ui.HTML(tribe_bar_html),
+            ui.p(f"Polarization Risk: {pol_risk.title()}", style=f"color:{pol_color}; margin-top:6px;"),
+            class_="foundation-card"
+        ))
+
+        # 4) Linguistic Signals Strip
+        # Defaults if linguistic not available (e.g., quick mode)
+        agency = (linguistic.get("agency_analysis") or {}) if linguistic else {}
+        passive = int(agency.get("passive_voice_percent", 0) or 0)
+        polar = (linguistic.get("polarization_metrics") or {}) if linguistic else {}
+        us_them = float(polar.get("us_vs_them_ratio", 0.0) or 0.0)
+        cert = (linguistic.get("certainty_metrics") or {}) if linguistic else {}
+        dogma = int(cert.get("dogmatism_score", 0) or 0)
+        quant = (linguistic.get("quantifier_vagueness") or {}) if linguistic else {}
+        vag_ratio = float(quant.get("vagueness_ratio", 0.0) or 0.0)
+        vag_score = int(round(vag_ratio * 100))
+        read = (linguistic.get("readability") or {}) if linguistic else {}
+        grade = float(read.get("grade_level", 0.0) or 0.0)
+        pers = (linguistic.get("persuasion_signature") or {}) if linguistic else {}
+        density = float(pers.get("rhetorical_density_score", 0.0) or 0.0)
+        classification = pers.get("classification", "Unknown")
+        valence = float(pers.get("net_valence_score", 0.0) or 0.0)
+
+        def color_gauge(val, green_thresh, yellow_thresh):
+            # return color based on thresholds (lower is better)
+            return "#28a745" if val < green_thresh else ("#ffc107" if val < yellow_thresh else "#dc3545")
+
+        dogma_color = color_gauge(dogma, 40, 70)
+        other_color = color_gauge(us_them, 1.0, 2.0)
+        vag_color = color_gauge(vag_score, 30, 70)
+        passive_color = color_gauge(passive, 20, 40)
+        density_color = color_gauge(density, 10, 25)
+        val_color = "#28a745" if valence > 0.1 else ("#6c757d" if abs(valence) <= 0.1 else "#dc3545")
+
+        badge_css = "display:inline-block; min-width:120px; padding:8px 10px; margin:4px; border-radius:8px; background:#eef3f7;"
+        label_css = "display:block; font-size:0.75em; color:#555;"
+        value_css = "font-weight:700; font-size:1.05em;"
+
+        metric_strip = ui.div(
+            ui.h4("Linguistic Signals"),
+            ui.div(
+                # Dogmatism
+                ui.div(
+                    ui.span("Dogmatism", style=label_css),
+                    ui.span(str(dogma), style=f"{value_css} color:{dogma_color};"),
+                    style=badge_css
+                ),
+                # Othering
+                ui.div(
+                    ui.span("Othering Ratio", style=label_css),
+                    ui.span(f"{us_them:.2f}", style=f"{value_css} color:{other_color};"),
+                    style=badge_css
+                ),
+                # Vagueness
+                ui.div(
+                    ui.span("Vagueness Score", style=label_css),
+                    ui.span(f"{vag_score}", style=f"{value_css} color:{vag_color};"),
+                    style=badge_css
+                ),
+                # Passive Voice
+                ui.div(
+                    ui.span("Passive Voice %", style=label_css),
+                    ui.span(str(passive), style=f"{value_css} color:{passive_color};"),
+                    style=badge_css
+                ),
+                # Readability
+                ui.div(
+                    ui.span("Grade Level", style=label_css),
+                    ui.span(f"{grade:.1f}", style=f"{value_css} color:#007bff;"),
+                    style=badge_css
+                ),
+                # Rhetorical Density
+                ui.div(
+                    ui.span("Devices /1k words", style=label_css),
+                    ui.span(f"{density:.1f}", style=f"{value_css} color:{density_color};"),
+                    style=badge_css
+                ),
+                style="display:flex; flex-wrap:wrap; align-items:center;"
+            ),
+            class_="foundation-card"
+        )
+        cards.append(metric_strip)
+
+        # 5) Rhetorical Signature Badge
+        signature_card = ui.div(
+            ui.h4("Rhetorical Signature"),
+            ui.p(
+                ui.tags.span(
+                    classification,
+                    style=f"font-weight:700; padding:4px 8px; border-radius:6px; background:#eef3f7; color:#333; margin-right:8px;"
+                ),
+                ui.tags.span(
+                    f"Net Valence: {valence:+.2f}",
+                    style=f"font-weight:700; padding:4px 8px; border-radius:6px; background:#eef3f7; color:{val_color};"
+                ),
+                style="font-size:0.95em;"
+            ),
+            class_="foundation-card"
+        )
+        cards.append(signature_card)
+
+        # 6) Performance (unchanged)
         if perf:
             cards.append(ui.div(
                 ui.h4("Performance"),
@@ -682,7 +880,8 @@ TEXT:
                     ui.tags.li(f"Ingestion: {perf.get('ingestion',0.0):.2f}s"),
                     ui.tags.li(f"Taxonomy: {perf.get('taxonomy', perf.get('combined',0.0)):.2f}s"),
                     ui.tags.li(f"Foundations: {perf.get('foundations',0.0):.2f}s"),
-                    ui.tags.li(f"Tribal: {perf.get('tribal',0.0):.2f}s") if perf.get('tribal') is not None else ""
+                    ui.tags.li(f"Tribal: {perf.get('tribal',0.0):.2f}s") if perf.get('tribal') is not None else "",
+                    ui.tags.li(f"Linguistic: {perf.get('linguistic',0.0):.2f}s") if perf.get('linguistic') is not None else ""
                 ),
                 class_="foundation-card"
             ))
