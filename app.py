@@ -21,6 +21,31 @@ from src.reality_taxonomy import RealityTaxonomyAnalyzer
 from src.moral_foundations import MoralFoundationsAnalyzer
 from src.tribal_resonance import TribalResonancePredictor
 from src.linguistic_analysis import LinguisticAnalyzer
+import json
+from pathlib import Path
+
+# Load prompts from JSON files
+def _load_prompts():
+    """Load all prompt configurations from JSON files."""
+    prompts_dir = Path(__file__).parent / "prompts"
+    prompts = {}
+    
+    # Load content summary prompts
+    summary_path = prompts_dir / "content_summary.json"
+    if summary_path.exists():
+        with open(summary_path, 'r') as f:
+            prompts['content_summary'] = json.load(f)
+    
+    # Load quick mode prompts
+    quick_path = prompts_dir / "quick_mode.json"
+    if quick_path.exists():
+        with open(quick_path, 'r') as f:
+            prompts['quick_mode'] = json.load(f)
+    
+    return prompts
+
+# Load prompts at startup
+APP_PROMPTS = _load_prompts()
 
 app_ui = ui.page_fluid(
     ui.tags.head(
@@ -282,8 +307,12 @@ def server(input, output, session):
             # Generate a concise neutral summary (2 sentences) of the submitted content
             content_summary = None
             try:
-                summary_prompt = f"""Summarize the following content neutrally in 2 sentences capturing its central claims/themes and overall tone. Avoid evaluative judgment. Return ONLY JSON: {{\n  \"summary\": \"text\"\n}}\n\nCONTENT:\n{content[:12000]}"""
-                summary_resp = await asyncio.to_thread(client.generate_json, summary_prompt, 55)
+                # Load summary prompt from JSON
+                summary_config = APP_PROMPTS.get('content_summary', {}).get('generate_summary', {})
+                summary_template = summary_config.get('template', 'Summarize the following content neutrally in 2 sentences capturing its central claims/themes and overall tone. Avoid evaluative judgment. Return ONLY JSON: {{"summary": "text"}}\n\nCONTENT:\n{content}')
+                summary_timeout = summary_config.get('timeout', 55)
+                summary_prompt = summary_template.format(content=content[:12000])
+                summary_resp = await asyncio.to_thread(client.generate_json, summary_prompt, summary_timeout)
                 if summary_resp.get("ok") and isinstance(summary_resp.get("data"), dict):
                     data = summary_resp.get("data", {})
                     content_summary = (data.get("summary") or data.get("Summary") or "").strip()
@@ -320,7 +349,15 @@ def server(input, output, session):
                 progress_phase.set("Running quick analysis (combined prompt)...")
                 await reactive.flush()
                 quick_start = time.perf_counter()
-                combined_prompt = f"""You are the Resonance Engine. Perform a QUICK integrated analysis of the following content.
+                
+                # Load quick mode prompt from JSON
+                quick_config = APP_PROMPTS.get('quick_mode', {}).get('combined_analysis', {})
+                quick_template = quick_config.get('template', '')
+                quick_timeout = quick_config.get('timeout', 90)
+                
+                # Fallback if JSON not loaded
+                if not quick_template:
+                    quick_template = """You are the Resonance Engine. Perform a QUICK integrated analysis of the following content.
 
 Return ONLY valid JSON with this exact structure:
 {{
@@ -332,24 +369,8 @@ Return ONLY valid JSON with this exact structure:
     "care_harm": {{"triggered": bool, "intensity": 0.0-1.0, "valence": "positive|neutral|negative", "explanation": "text", "triggers": ["phrase1", "phrase2"]}},
     "fairness_cheating": {{...}},
     "loyalty_betrayal": {{...}},
-                    # If canceled before starting, stop
-                    if cancel_requested.get():
-                        print("[ResonanceEngine] Canceled before quick call")
-                        canceled.set(True)
-                        processing.set(False)
-                        progress_phase.set("")
-                        await reactive.flush()
-                        return
-
-                    combined_resp = await asyncio.to_thread(client.generate_json, combined_prompt, 90)
+    "authority_subversion": {{...}},
     "sanctity_degradation": {{...}},
-                    # If canceled during call, stop and drop result
-                    if cancel_requested.get():
-                        canceled.set(True)
-                        processing.set(False)
-                        progress_phase.set("")
-                        await reactive.flush()
-                        return
     "liberty_oppression": {{...}},
     "overall_profile": "brief summary of moral signature"
   }},
@@ -368,11 +389,15 @@ DEFINITIONS:
 - Subjective: Individual feelings/experiences (personal pain, preferences)
 - Intersubjective: Shared social constructs (money, laws, national borders)
 
-TASK: Extract up to {min(8, max_assertions)} key assertions from the text and classify each one. Then analyze moral foundations and tribal resonance.
+TASK: Extract up to {max_assertions} key assertions from the text and classify each one. Then analyze moral foundations and tribal resonance.
 
 TEXT:
-{content[:8000]}
-"""
+{content}"""
+                
+                combined_prompt = quick_template.format(
+                    max_assertions=min(8, max_assertions),
+                    content=content[:8000]
+                )
                 # Run model call in background and race against cancel signal
                 gen_task = asyncio.create_task(asyncio.to_thread(client.generate_json, combined_prompt, 90))
                 cancel_task = asyncio.create_task(_wait_for_cancel())

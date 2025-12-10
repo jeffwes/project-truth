@@ -1,0 +1,60 @@
+{
+  "objective_fact_check": {
+    "description": "Fact-checks objective reality assertions with web search simulation, temporal resolution, and source verification",
+    "framework": {
+      "intro": "Objective assertions require empirical verification. This prompt instructs the LLM to simulate web search for recent sources, resolve temporal references, and provide structured fact-check metadata with sources.",
+      "instructions": [
+        "PRIORITIZE live/current information: conceptually simulate performing a web search BEFORE using internal knowledge",
+        "Prefer sources < 90 days old for breaking events; if none found, use the most authoritative recent source (< 24 months) and mark older items explicitly",
+        "Avoid hallucinating exact figures if not found; set status='unclear' with notes describing attempted search angle",
+        "If multiple conflicting credible sources exist, use status='disputed' and include one supporting and one opposing evidence item",
+        "Reject sources lacking provenance (no publisher/date) or obvious opinion pieces unless noting viewpoint",
+        "If initial internal knowledge does NOT yield a source < 90 days, ITERATIVELY simulate web search queries: start with 2-4 high-signal keywords from the assertion (include location or actor names), then refine by adding a timeframe term (e.g., '2025', 'recent', 'last month'). Continue until a recent source is found or you exhaust plausible variations. Record the final set of attempted query terms in 'notes' if status becomes 'unclear' or 'disputed'",
+        "Never backfill dates: if only older sources (>24 months) exist, explicitly state 'no recent source located' in notes"
+      ]
+    },
+    "template": "Provide STRICT, up-to-date fact-check metadata for EACH objective reality assertion in this JSON array.\n\nCURRENT_DATE: {current_date}\n\nTemporal Resolution:\n- Resolve relative time phrases (\"today\", \"yesterday\", \"Tuesday\", \"last week\") to concrete ISO dates based on CURRENT_DATE.\n- If the assertion references a recent event (breaking news), prioritize sources published AFTER the referenced event date.\n\nFor each assertion return an object:\n{{\"assertion\": original,\n    \"fact_check\": {{\n        \"status\": \"verified\"|\"partially_verified\"|\"disputed\"|\"unclear\",\n        \"verification_confidence\": 0.0-1.0,\n        \"evidence\": [\"concise paraphrase of strongest supporting or refuting evidence\"],\n        \"notes\": \"method + temporal resolution + any uncertainty; list search terms if unclear\",\n        \"sources\": [{{\"title\": \"source title\", \"url\": \"https://...\", \"date\": \"YYYY-MM-DD\"}}]\n    }}\n}}\n\nRecency & Reliability Instructions (DO FIRST):\n1. PRIORITIZE live/current information: conceptually simulate performing a web search BEFORE using internal knowledge.\n2. Prefer sources < 90 days old for breaking events; if none found, use the most authoritative recent source (< 24 months) and mark older items explicitly.\n3. Avoid hallucinating exact figures if not found; set status=\"unclear\" with notes describing attempted search angle.\n4. If multiple conflicting credible sources exist, use status=\"disputed\" and include one supporting and one opposing evidence item.\n5. Reject sources lacking provenance (no publisher/date) or obvious opinion pieces unless noting viewpoint.\n6. If initial internal knowledge does NOT yield a source < 90 days, ITERATIVELY simulate web search queries: start with 2-4 high-signal keywords from the assertion (include location or actor names), then refine by adding a timeframe term (e.g., \"2025\", \"recent\", \"last month\"). Continue until a recent source is found or you exhaust plausible variations. Record the final set of attempted query terms in `notes` if status becomes \"unclear\" or \"disputed\".\n7. Never backfill dates: if only older sources (>24 months) exist, explicitly state \"no recent source located\" in `notes`.\n\nReturn ONLY a JSON array; no commentary outside JSON.\n\nASSERTIONS:\n{assertions_json}",
+    "timeout": 80,
+    "notes": "Used in deep mode to enrich objective assertions with fact-checking metadata including sources and verification status"
+  },
+  "intersubjective_stability": {
+    "description": "Analyzes intersubjective assertions for stability (naturalized vs contested) and categorizes them by myth type",
+    "framework": {
+      "intro": "Intersubjective realities (shared myths) vary in stability. Some are 'naturalized' (treated as unchangeable facts), others are 'contested' (actively challenged). This analysis identifies linguistic cues and categorizes the type of shared belief.",
+      "stability_categories": [
+        "naturalized: framed as permanent, unquestioned ('is', institutional declaratives)",
+        "contested: language signalling challenge/fragility ('being questioned', 'under attack')",
+        "ambiguous: insufficient linguistic cues"
+      ],
+      "myth_categories": [
+        "tribal_national: national identity, patriotism, ethnic solidarity",
+        "legal_bureaucratic: laws, regulations, institutional procedures",
+        "economic: money, markets, property rights, corporate structures",
+        "divine_ideological: religious doctrines, political ideologies, moral frameworks",
+        "other: social norms, fashion, status hierarchies"
+      ]
+    },
+    "template": "Analyze EACH intersubjective assertion for stability and myth taxonomy.\n\nReturn ONLY a JSON array of objects like:\n{{\"assertion\": original,\n  \"stability_index\": {{\"status\": \"naturalized\"|\"contested\"|\"ambiguous\", \"cues\": [\"phrase\"], \"reasoning\": \"brief\"}},\n  \"myth_taxonomy\": {{\"category\": \"tribal_national\"|\"legal_bureaucratic\"|\"economic\"|\"divine_ideological\"|\"other\", \"confidence\": 0.0-1.0, \"reasoning\": \"brief\"}}\n}}\n\nGuidance:\n- naturalized: framed as permanent, unquestioned (\"is\", institutional declaratives).\n- contested: language signalling challenge / fragility (\"being questioned\", \"under attack\").\n- ambiguous: insufficient linguistic cues.\n\nASSERTIONS:\n{assertions_json}",
+    "timeout": 70,
+    "notes": "Used in deep mode to enrich intersubjective assertions with stability and categorization metadata"
+  },
+  "subjective_arousal": {
+    "description": "Analyzes subjective assertions for viral arousal potential (emotional intensity) and empathy span (whose perspective is represented)",
+    "framework": {
+      "intro": "Subjective assertions express individual experiences and emotions. This analysis measures their viral potential (high-arousal emotions spread faster) and empathy span (whose experiences are centered).",
+      "arousal_categories": [
+        "high: anger, awe, anxiety, excitement, fear, hope (high-arousal emotions that drive sharing)",
+        "low: sadness, contentment (low-arousal emotions that reduce sharing)",
+        "neutral: descriptive statements with no strong affective content"
+      ],
+      "empathy_metrics": [
+        "sides_described: which groups or perspectives are represented in the assertion",
+        "focus_bias: one_sided (single perspective), balanced (multiple perspectives), unclear",
+        "entities_with_emotion: count of distinct entities whose emotions are described"
+      ]
+    },
+    "template": "For EACH subjective assertion provide viral arousal and empathy span metrics.\n\nReturn ONLY a JSON array of objects:\n{{\"assertion\": original,\n  \"viral_arousal\": {{\"category\": \"high\"|\"low\"|\"neutral\", \"emotion_tags\": [\"anger\"], \"arousal_score\": 0.0-1.0, \"rationale\": \"brief\"}},\n  \"empathy_span\": {{\"sides_described\": [\"group\"], \"focus_bias\": \"one_sided\"|\"balanced\"|\"unclear\", \"entities_with_emotion\": int, \"notes\": \"brief\"}}\n}}\n\nEmotion guidance: high -> anger,awe,anxiety,excitement,fear,hope; low -> sadness,contentment; neutral -> descriptive/no strong affect.\n\nASSERTIONS:\n{assertions_json}",
+    "timeout": 70,
+    "notes": "Used in deep mode to enrich subjective assertions with viral potential and perspective analysis"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "generate_summary": {
+    "description": "Generates a neutral 2-sentence summary of content capturing central claims/themes and tone",
+    "template": "Summarize the following content neutrally in 2 sentences capturing its central claims/themes and overall tone. Avoid evaluative judgment. Return ONLY JSON: {{\"summary\": \"text\"}}\n\nCONTENT:\n{content}",
+    "timeout": 55,
+    "notes": "Used to generate a brief content overview for display on the Overview tab"
+  }
+}

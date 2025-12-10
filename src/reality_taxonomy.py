@@ -21,12 +21,21 @@ class RealityTaxonomyAnalyzer:
         """Initialize with Gemini client."""
         self.client = gemini_client
         self.prompts = self._load_prompts()
+        self.enrichment_prompts = self._load_enrichment_prompts()
     
     def _load_prompts(self) -> Dict[str, Any]:
         """Load prompts from JSON file."""
         prompts_path = Path(__file__).parent.parent / "prompts" / "reality_taxonomy.json"
         if prompts_path.exists():
             with open(prompts_path, 'r') as f:
+                return json.load(f)
+        return {}
+    
+    def _load_enrichment_prompts(self) -> Dict[str, Any]:
+        """Load enrichment prompts from JSON file."""
+        enrichment_path = Path(__file__).parent.parent / "prompts" / "enrichment.json"
+        if enrichment_path.exists():
+            with open(enrichment_path, 'r') as f:
                 return json.load(f)
         return {}
     
@@ -277,7 +286,15 @@ ASSERTIONS:
         prompt_payload = [o.get("assertion", "") for o in objs]
         prompt_json = json.dumps(prompt_payload[:40])  # safety cap
         current_date = date.today().isoformat()
-        prompt = f"""Provide STRICT, up-to-date fact-check metadata for EACH objective reality assertion in this JSON array.
+        
+        # Load prompt from JSON
+        fact_check_config = self.enrichment_prompts.get('objective_fact_check', {})
+        prompt_template = fact_check_config.get('template', '')
+        timeout = fact_check_config.get('timeout', 80)
+        
+        # Fallback if not loaded
+        if not prompt_template:
+            prompt_template = """Provide STRICT, up-to-date fact-check metadata for EACH objective reality assertion in this JSON array.
 
 CURRENT_DATE: {current_date}
 
@@ -308,9 +325,13 @@ Recency & Reliability Instructions (DO FIRST):
 Return ONLY a JSON array; no commentary outside JSON.
 
 ASSERTIONS:
-{prompt_json}
-"""
-        result = self.client.generate_json(prompt, timeout=80)
+{assertions_json}"""
+        
+        prompt = prompt_template.format(
+            current_date=current_date,
+            assertions_json=prompt_json
+        )
+        result = self.client.generate_json(prompt, timeout)
         if not result.get("ok"):
             # Populate default fact_check structure
             for o in objs:
@@ -358,7 +379,15 @@ ASSERTIONS:
             return assertions
         payload = [i.get("assertion", "") for i in inters]
         prompt_json = json.dumps(payload[:50])
-        prompt = f"""Analyze EACH intersubjective assertion for stability and myth taxonomy.
+        
+        # Load prompt from JSON
+        stability_config = self.enrichment_prompts.get('intersubjective_stability', {})
+        prompt_template = stability_config.get('template', '')
+        timeout = stability_config.get('timeout', 70)
+        
+        # Fallback if not loaded
+        if not prompt_template:
+            prompt_template = """Analyze EACH intersubjective assertion for stability and myth taxonomy.
 
 Return ONLY a JSON array of objects like:
 {{"assertion": original,
@@ -372,9 +401,10 @@ Guidance:
 - ambiguous: insufficient linguistic cues.
 
 ASSERTIONS:
-{prompt_json}
-"""
-        result = self.client.generate_json(prompt, timeout=70)
+{assertions_json}"""
+        
+        prompt = prompt_template.format(assertions_json=prompt_json)
+        result = self.client.generate_json(prompt, timeout)
         if not result.get("ok"):
             for i in inters:
                 i["stability_index"] = {"status": "ambiguous", "cues": [], "reasoning": result.get("error", "enrichment failed")}
@@ -407,7 +437,15 @@ ASSERTIONS:
             return assertions
         payload = [s.get("assertion", "") for s in subs]
         prompt_json = json.dumps(payload[:50])
-        prompt = f"""For EACH subjective assertion provide viral arousal and empathy span metrics.
+        
+        # Load prompt from JSON
+        arousal_config = self.enrichment_prompts.get('subjective_arousal', {})
+        prompt_template = arousal_config.get('template', '')
+        timeout = arousal_config.get('timeout', 70)
+        
+        # Fallback if not loaded
+        if not prompt_template:
+            prompt_template = """For EACH subjective assertion provide viral arousal and empathy span metrics.
 
 Return ONLY a JSON array of objects:
 {{"assertion": original,
@@ -418,9 +456,10 @@ Return ONLY a JSON array of objects:
 Emotion guidance: high -> anger,awe,anxiety,excitement,fear,hope; low -> sadness,contentment; neutral -> descriptive/no strong affect.
 
 ASSERTIONS:
-{prompt_json}
-"""
-        result = self.client.generate_json(prompt, timeout=70)
+{assertions_json}"""
+        
+        prompt = prompt_template.format(assertions_json=prompt_json)
+        result = self.client.generate_json(prompt, timeout)
         if not result.get("ok"):
             for s in subs:
                 s["viral_arousal"] = {"category": "neutral", "emotion_tags": [], "arousal_score": 0.0, "rationale": result.get("error", "enrichment failed")}
