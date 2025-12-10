@@ -1,5 +1,6 @@
 """Moral Foundations Theory analyzer."""
 import json
+from pathlib import Path
 from typing import Dict, Any, List
 from src.gemini_client import GeminiClient
 
@@ -30,6 +31,15 @@ class MoralFoundationsAnalyzer:
     def __init__(self, gemini_client: GeminiClient):
         """Initialize with Gemini client."""
         self.client = gemini_client
+        self.prompts = self._load_prompts()
+    
+    def _load_prompts(self) -> Dict[str, Any]:
+        """Load prompts from JSON file."""
+        prompts_path = Path(__file__).parent.parent / "prompts" / "moral_foundations.json"
+        if prompts_path.exists():
+            with open(prompts_path, 'r') as f:
+                return json.load(f)
+        return {}
     
     def analyze_foundations(self, content: str) -> Dict[str, Any]:
         """
@@ -51,12 +61,18 @@ class MoralFoundationsAnalyzer:
         # Build comprehensive prompt
         foundations_desc = "\n".join([f"{i+1}. {desc}" for i, desc in enumerate(self.FOUNDATIONS.values())])
         
-        prompt = f"""Analyze this content using Moral Foundations Theory (Jonathan Haidt).
-
-CONTENT:
-{content[:8000]}
-
-MORAL FOUNDATIONS THEORY - COMPREHENSIVE FRAMEWORK:
+        # Load framework from JSON or use fallback
+        framework_text = ""
+        if self.prompts and "analyze_foundations" in self.prompts:
+            framework_data = self.prompts["analyze_foundations"].get("framework", {})
+            if framework_data:
+                framework_text = framework_data.get("description", "")
+                if not framework_text:
+                    framework_text = framework_data.get("intro", "")
+        
+        # Fallback to default framework if not loaded from JSON
+        if not framework_text:
+            framework_text = """MORAL FOUNDATIONS THEORY - COMPREHENSIVE FRAMEWORK:
 
 Moral Foundations Theory (Jonathan Haidt) identifies six innate psychological systems that shape moral judgment across cultures. These "foundations" are like taste receptors—everyone has them, but political tribes differ dramatically in which foundations they weight most heavily. Understanding which foundations a piece of content activates reveals its tribal targeting and persuasive strategy.
 
@@ -121,7 +137,14 @@ KEY INSIGHTS:
 
 - Libertarians spike on Liberty/Oppression and downplay Authority, making them suspicious of both government power and social conformity pressure.
 
-- Most political conflict stems from tribes talking past each other because they're activating different moral foundations. What progressives see as compassion (high Care), conservatives may see as naive bleeding-heart sentimentality that ignores group boundaries (low Loyalty) and proper order (low Authority).
+- Most political conflict stems from tribes talking past each other because they're activating different moral foundations. What progressives see as compassion (high Care), conservatives may see as naive bleeding-heart sentimentality that ignores group boundaries (low Loyalty) and proper order (low Authority)."""
+        
+        prompt = f"""Analyze this content using Moral Foundations Theory (Jonathan Haidt).
+
+CONTENT:
+{content[:8000]}
+
+{framework_text}
 
 MORAL FOUNDATIONS TO ANALYZE:
 {foundations_desc}

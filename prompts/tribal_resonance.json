@@ -1,0 +1,83 @@
+{
+  "predict_resonance": {
+    "description": "Predict which social/political tribes will resonate with content",
+    "framework": {
+      "title": "TRIBAL RESONANCE THEORY - COMPREHENSIVE FRAMEWORK",
+      "intro": "Modern political discourse is organized around distinct social/political tribes, each with characteristic moral foundations profiles, narrative styles, and core values. Content resonates with tribes when it activates their dominant moral foundations and employs their preferred rhetorical strategies. Understanding tribal resonance predicts which audiences will amplify or reject a message.",
+      "tribes": {
+        "progressive_left": {
+          "name": "PROGRESSIVE LEFT",
+          "moral_profile": "Very high Care/Harm, very high Fairness/Cheating, very high Liberty/Oppression. Low Loyalty, Authority, Sanctity.",
+          "core_values": "Social justice, equity, anti-oppression, universal compassion, systemic change",
+          "narrative_style": "Emphasis on structural analysis, power dynamics, marginalized voices, intersectionality",
+          "key_triggers": "Suffering of vulnerable groups, inequality, discrimination, social injustice, oppression",
+          "rhetorical_patterns": "Academic language, theory-heavy, appeals to studies, moral urgency about harm reduction"
+        },
+        "democratic_establishment": {
+          "name": "DEMOCRATIC ESTABLISHMENT / CENTER-LEFT",
+          "moral_profile": "High Care, high Fairness, moderate Loyalty, moderate Authority, moderate Liberty",
+          "core_values": "Pragmatic reform, institutions, expertise, evidence-based policy, incremental progress",
+          "narrative_style": "Policy wonkism, institutional trust, expert consensus, data-driven",
+          "key_triggers": "Evidence-based solutions, institutional legitimacy, expert opinion, pragmatic compromise",
+          "rhetorical_patterns": "Technocratic, appeals to credentials, moderate tone, coalition-building language"
+        },
+        "libertarian": {
+          "name": "LIBERTARIAN",
+          "moral_profile": "Very high Liberty/Oppression, high Fairness (procedural), low Authority, low Loyalty",
+          "core_values": "Individual freedom, free markets, limited government, personal responsibility, non-aggression",
+          "narrative_style": "Principled reasoning from first principles, constitutional originalism, economic logic",
+          "key_triggers": "Government overreach, taxation, regulation, individual rights violations, market efficiency",
+          "rhetorical_patterns": "Appeals to freedom, \"slippery slope\" warnings about tyranny, economic arguments"
+        },
+        "conservative_establishment": {
+          "name": "CONSERVATIVE ESTABLISHMENT / CENTER-RIGHT",
+          "moral_profile": "Moderate-high across all six foundations (balanced moral matrix)",
+          "core_values": "Free enterprise, individual responsibility, ordered liberty, traditional institutions, gradual reform",
+          "narrative_style": "Emphasis on proven institutions, historical wisdom, unintended consequences, realism",
+          "key_triggers": "Respect for tradition, economic growth, family values, law and order, national security",
+          "rhetorical_patterns": "Appeals to tradition, historical precedent, practical consequences, business prosperity"
+        },
+        "religious_conservative": {
+          "name": "RELIGIOUS CONSERVATIVE",
+          "moral_profile": "Very high Sanctity/Degradation, very high Authority, high Loyalty, moderate Care",
+          "core_values": "Traditional morality, religious authority, family values, sanctity of life, moral order",
+          "narrative_style": "Biblical references, moral absolutes, faith-based reasoning, eternal truths",
+          "key_triggers": "Religious persecution, moral decay, family breakdown, abortion, sexual morality",
+          "rhetorical_patterns": "Scripture citations, moral clarity, prophetic warnings, \"culture war\" framing"
+        },
+        "populist_right": {
+          "name": "POPULIST RIGHT / MAGA",
+          "moral_profile": "Very high Loyalty, very high Liberty (anti-elite), high Authority (certain leaders), moderate-low Fairness",
+          "core_values": "America First, anti-establishment, nationalist, working-class identity, \"common sense\"",
+          "narrative_style": "Plain-spoken, anti-elite, conspiratorial about institutions, \"us vs. them\" framing",
+          "key_triggers": "Betrayal by elites, national sovereignty threats, \"real Americans\" vs. coastal elites, immigration",
+          "rhetorical_patterns": "Populist language, simple sentences, emotional appeals, anti-expert, tribal signaling"
+        },
+        "centrist": {
+          "name": "CENTRIST / MODERATE",
+          "moral_profile": "Balanced across foundations but lower intensity than ideological tribes",
+          "core_values": "Pragmatism, compromise, \"both sides have a point\", stability, common ground",
+          "narrative_style": "\"On the one hand... on the other hand\", critique of extremes, complexity acknowledgment",
+          "key_triggers": "Extreme rhetoric from either side, partisan gridlock, practical solutions, common sense",
+          "rhetorical_patterns": "Balanced tone, \"reasonable people can disagree\", appeals to moderation"
+        },
+        "apolitical": {
+          "name": "APOLITICAL / DISENGAGED",
+          "moral_profile": "Variable but low activation on political content",
+          "core_values": "Personal life focus, skepticism of politics, practical self-interest, entertainment",
+          "narrative_style": "Avoids political framing, personal stories, immediate relevance",
+          "key_triggers": "Direct impact on daily life, personal safety, entertainment value, non-political hooks",
+          "rhetorical_patterns": "Accessible language, personal relevance, avoids partisan signals"
+        }
+      },
+      "key_insights": [
+        "Content resonates when it activates a tribe's dominant moral foundations at high intensity",
+        "Narrative style matching is crucial: academic language attracts progressives but repels populists",
+        "Cross-tribal appeal requires activating shared foundations (Liberty resonates with both libertarians and progressives; Care can bridge left and some religious conservatives)",
+        "High polarization occurs when content simultaneously activates positive valence for one tribe's dominant foundations while violating another tribe's (e.g., immigration restriction appeals to Loyalty/Authority for conservatives while violating Care/Fairness for progressives)",
+        "The absence of certain foundations can be as revealing as their presence (e.g., no Loyalty/Authority signals = progressive; no Care/Fairness = conservative)"
+      ]
+    },
+    "template": "Predict which social/political tribes will resonate with this content.\n\nCONTENT EXCERPT:\n{content}\n\nMORAL FOUNDATIONS PROFILE:\n{foundations_summary}\n\n{taxonomy_summary}\n\n{framework_text}\n\nFor each tribe, predict:\n1. Resonance score (0.0-1.0): How strongly will this tribe resonate?\n2. Reasoning: Why will they find it compelling or reject it?\n3. Specific hooks: What elements will attract or repel them?\n\nAlso assess:\n- Polarization risk: Will this content divide or unite tribes?\n- Cross-tribal appeal: Does it bridge or reinforce divides?\n\nReturn JSON:\n{{\n    \"tribes\": [\n        {{\n            \"name\": \"tribe_key\",\n            \"resonance_score\": 0.0-1.0,\n            \"sentiment\": \"positive\" | \"negative\" | \"neutral\",\n            \"reasoning\": \"why they'll resonate or reject\",\n            \"hooks\": [\"specific appealing elements\"]\n        }},\n        ...\n    ],\n    \"polarization_risk\": \"low\" | \"medium\" | \"high\",\n    \"polarization_explanation\": \"explanation\",\n    \"cross_tribal_potential\": \"Summary of bridges or divides\",\n    \"overall_tribal_signature\": \"One sentence summary of who this resonates with most\"\n}}"
+  }
+}

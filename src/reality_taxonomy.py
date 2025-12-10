@@ -1,7 +1,9 @@
 """Reality Taxonomy Analyzer - Classifies assertions using Harari's framework."""
 import json
+import os
 from datetime import date
 from typing import List, Dict, Any
+from pathlib import Path
 from src.gemini_client import GeminiClient
 
 
@@ -18,6 +20,15 @@ class RealityTaxonomyAnalyzer:
     def __init__(self, gemini_client: GeminiClient):
         """Initialize with Gemini client."""
         self.client = gemini_client
+        self.prompts = self._load_prompts()
+    
+    def _load_prompts(self) -> Dict[str, Any]:
+        """Load prompts from JSON file."""
+        prompts_path = Path(__file__).parent.parent / "prompts" / "reality_taxonomy.json"
+        if prompts_path.exists():
+            with open(prompts_path, 'r') as f:
+                return json.load(f)
+        return {}
     
     def extract_assertions(self, content: str, max_assertions: int = 10) -> List[str]:
         """
@@ -33,7 +44,14 @@ class RealityTaxonomyAnalyzer:
         if not content or not content.strip():
             return []
         
-        prompt = f"""Extract the top {max_assertions} most important assertions or claims from this text.
+        # Get prompt from JSON
+        extract_template = ""
+        if self.prompts and "extract_assertions" in self.prompts:
+            extract_template = self.prompts["extract_assertions"].get("template", "")
+        
+        # Fallback to default if not loaded from JSON
+        if not extract_template:
+            extract_template = """Extract the top {max_assertions} most important assertions or claims from this text.
 
 Each assertion should be:
 - A standalone statement that can be classified as objective, subjective, or intersubjective
@@ -43,8 +61,9 @@ Each assertion should be:
 Return ONLY a JSON array of strings, like: ["assertion 1", "assertion 2", ...]
 
 TEXT:
-{content[:8000]}"""
+{content}"""
         
+        prompt = extract_template.format(max_assertions=max_assertions, content=content[:8000])
         result = self.client.generate_json(prompt)
         
         if not result["ok"]:
@@ -85,11 +104,22 @@ TEXT:
         Returns:
             Dict with 'assertion', 'classification', 'confidence', 'reasoning' keys
         """
-        prompt = f"""Classify this assertion using Yuval Noah Harari's Reality Taxonomy.
-
-ASSERTION: "{assertion}"
-
-HARARI'S REALITY TAXONOMY - COMPREHENSIVE FRAMEWORK:
+        # Build framework text from JSON
+        framework_text = ""
+        if self.prompts and "classify_assertion" in self.prompts:
+            framework_data = self.prompts["classify_assertion"].get("framework", {})
+            if framework_data:
+                framework_text = framework_data.get("description", "")
+                if not framework_text:
+                    # Build from intro + tiers
+                    framework_text = framework_data.get("intro", "")
+                    for tier in framework_data.get("tiers", []):
+                        framework_text += f"\n\n{tier.get('name', '')}\n"
+                        framework_text += tier.get("description", "")
+        
+        # Fallback if not loaded from JSON
+        if not framework_text:
+            framework_text = """HARARI'S REALITY TAXONOMY - COMPREHENSIVE FRAMEWORK:
 
 This framework distinguishes three fundamentally different types of reality based on their relationship to human consciousness. Understanding these categories reveals how different types of claims should be evaluated and what forms of evidence are appropriate for each.
 
@@ -141,7 +171,13 @@ Three Sub-Tiers:
 
 Political Significance: Much political conflict involves competing intersubjective realities (different "myths" about justice, rights, national identity). Recognizing something as intersubjective doesn't make it less real or less important—money and laws shape our lives profoundly—but it reveals that these realities can be renegotiated through collective belief change.
 
-KEY INSIGHT: The most powerful rhetoric obscures category boundaries—presenting intersubjective beliefs ("America is a Christian nation") as objective facts, or elevating subjective preferences ("I find this offensive") to the status of universal moral truths.
+KEY INSIGHT: The most powerful rhetoric obscures category boundaries—presenting intersubjective beliefs ("America is a Christian nation") as objective facts, or elevating subjective preferences ("I find this offensive") to the status of universal moral truths."""
+        
+        prompt = f"""Classify this assertion using Yuval Noah Harari's Reality Taxonomy.
+
+ASSERTION: "{assertion}"
+
+{framework_text}
 
 Return JSON with this structure:
 {{

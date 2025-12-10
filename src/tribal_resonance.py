@@ -1,5 +1,6 @@
 """Tribal Resonance Predictor - Predicts which social tribes will resonate with content."""
 import json
+from pathlib import Path
 from typing import Dict, Any, List
 from src.gemini_client import GeminiClient
 
@@ -28,6 +29,15 @@ class TribalResonancePredictor:
     def __init__(self, gemini_client: GeminiClient):
         """Initialize with Gemini client."""
         self.client = gemini_client
+        self.prompts = self._load_prompts()
+    
+    def _load_prompts(self) -> Dict[str, Any]:
+        """Load prompts from JSON file."""
+        prompts_path = Path(__file__).parent.parent / "prompts" / "tribal_resonance.json"
+        if prompts_path.exists():
+            with open(prompts_path, 'r') as f:
+                return json.load(f)
+        return {}
     
     def predict_resonance(
         self,
@@ -64,17 +74,18 @@ class TribalResonancePredictor:
         # Build tribe descriptions
         tribes_desc = "\n".join([f"- {name}: {desc}" for name, desc in self.TRIBE_CATEGORIES.items()])
         
-        prompt = f"""Predict which social/political tribes will resonate with this content.
-
-CONTENT EXCERPT:
-{content[:4000]}
-
-MORAL FOUNDATIONS PROFILE:
-{foundations_summary}
-
-{taxonomy_summary}
-
-TRIBAL RESONANCE THEORY - COMPREHENSIVE FRAMEWORK:
+        # Load framework from JSON or use fallback
+        framework_text = ""
+        if self.prompts and "predict_resonance" in self.prompts:
+            framework_data = self.prompts["predict_resonance"].get("framework", {})
+            if framework_data:
+                framework_text = framework_data.get("description", "")
+                if not framework_text:
+                    framework_text = framework_data.get("intro", "")
+        
+        # Fallback framework if not loaded from JSON
+        if not framework_text:
+            framework_text = """TRIBAL RESONANCE THEORY - COMPREHENSIVE FRAMEWORK:
 
 Modern political discourse is organized around distinct social/political tribes, each with characteristic moral foundations profiles, narrative styles, and core values. Content resonates with tribes when it activates their dominant moral foundations and employs their preferred rhetorical strategies. Understanding tribal resonance predicts which audiences will amplify or reject a message.
 
@@ -142,7 +153,19 @@ KEY INSIGHTS FOR RESONANCE PREDICTION:
 - Narrative style matching is crucial: academic language attracts progressives but repels populists
 - Cross-tribal appeal requires activating shared foundations (Liberty resonates with both libertarians and progressives; Care can bridge left and some religious conservatives)
 - High polarization occurs when content simultaneously activates positive valence for one tribe's dominant foundations while violating another tribe's (e.g., immigration restriction appeals to Loyalty/Authority for conservatives while violating Care/Fairness for progressives)
-- The absence of certain foundations can be as revealing as their presence (e.g., no Loyalty/Authority signals = progressive; no Care/Fairness = conservative)
+- The absence of certain foundations can be as revealing as their presence (e.g., no Loyalty/Authority signals = progressive; no Care/Fairness = conservative)"""
+        
+        prompt = f"""Predict which social/political tribes will resonate with this content.
+
+CONTENT EXCERPT:
+{content[:4000]}
+
+MORAL FOUNDATIONS PROFILE:
+{foundations_summary}
+
+{taxonomy_summary}
+
+{framework_text}
 
 TRIBAL CATEGORIES:
 {tribes_desc}

@@ -1,0 +1,164 @@
+{
+  "analyze_content": {
+    "description": "Comprehensive linguistic forensics analysis to identify manipulation patterns, polarization markers, certainty claims, readability, quantifier vagueness, and persuasion signature",
+    "framework": {
+      "intro": "Linguistic analysis reveals the hidden rhetorical patterns that shape persuasion. By measuring agency (passive voice), polarization (us vs them language), dogmatism (certainty claims), complexity (readability), vagueness (quantifier precision), and persuasion signature (rhetorical device density), we can decode how messages manipulate perception and drive tribal resonance.",
+      "dimensions": [
+        {
+          "name": "Agency & Responsibility",
+          "description": "Measures how passive voice constructions hide actors and obscure accountability",
+          "measures": ["Passive voice percentage", "Hidden actor examples", "Responsibility interpretation"],
+          "method": "Count passive voice constructions (was/were + past participle). Identify where actors are hidden. Calculate passive_voice_percent = (passive sentences / total sentences) * 100."
+        },
+        {
+          "name": "Polarization (Us vs Them)",
+          "description": "Identifies in-group/out-group language that triggers tribal resonance",
+          "measures": ["In-group pronoun counts (we, us, our)", "Out-group pronoun counts (they, them, those)", "Most used out-group label", "Us vs them ratio"],
+          "method": "Count we, us, our, ours (ingroup). Count they, them, their, those people, the other side (outgroup). Calculate ratio = outgroup_count / max(ingroup_count, 1). Identify specific out-group labels ('The Radical Left', 'Big Tech', etc.)."
+        },
+        {
+          "name": "Certainty & Dogmatism",
+          "description": "Measures epistemic stance - how confidently claims are stated without qualification",
+          "measures": ["Dogmatism score (0-100)", "High modality count", "Low modality count", "Dominant modal verbs"],
+          "method": "High modality: must, will, always, never, definitely, undoubtedly, is, are (declarative certainty). Low modality: might, could, may, possibly, perhaps, seems, suggests. dogmatism_score = (high_modality / (high_modality + low_modality)) * 100."
+        },
+        {
+          "name": "Readability & Complexity",
+          "description": "Assesses text complexity and accessibility - a tool of either democratization or obfuscation",
+          "measures": ["Grade level (0-20)", "Average sentence length", "Lexical density (0-1)", "Style classification"],
+          "method": "Estimate Flesch-Kincaid grade level (0-20 scale). Lexical density = (content words / total words). Style: Academic (>12), Conversational (6-10), Populist (<8 with simple vocab)."
+        },
+        {
+          "name": "Quantifier Vagueness",
+          "description": "Distinguishes between vague rhetorical inflation and precise evidence-based claims",
+          "measures": ["Vague quantifier count", "Precise quantifier count", "Vagueness ratio", "Examples of both"],
+          "method": "Vague: many, most, some, several, few, numerous, countless, a lot of, growing number, increasingly, widespread, significant, substantial, considerable. Precise: specific numbers (73%, 14 studies, 2,400 participants), named sources with dates. vagueness_ratio = vague_count / (vague_count + precise_count). High ratio (>0.7) = weak evidence, rhetorical inflation. Low ratio (<0.3) = evidence-based."
+        },
+        {
+          "name": "Persuasion Signature",
+          "description": "Identifies 15 specific rhetorical devices used to manipulate perception and drive action",
+          "measures": ["Rhetorical device counts", "Net valence score", "Classification", "Rhetorical density"],
+          "method": "Identify and count all 15 rhetorical devices with their valence scores. Calculate density = total_device_count / (word_count / 1000). Net valence = average of all valence_scores weighted by count. Classification based on density + valence quadrant."
+        }
+      ],
+      "devices": [
+        {
+          "id": 1,
+          "name": "Strawman Argument",
+          "definition": "Misrepresenting opponent's argument to make it easier to attack",
+          "valence": -1.0,
+          "example": "Opponents say we should do X. But that would mean Y, which is absurd."
+        },
+        {
+          "id": 2,
+          "name": "False Dichotomy",
+          "definition": "Presenting complex issues as having only two sides, eliminating nuance",
+          "valence": -1.0,
+          "example": "You're either with us or against us. There is no middle ground."
+        },
+        {
+          "id": 3,
+          "name": "Ad Hominem",
+          "definition": "Attacking character rather than argument; dismissing ideas based on who says them",
+          "valence": -1.0,
+          "example": "That's what you'd expect from someone like him. He's obviously biased."
+        },
+        {
+          "id": 4,
+          "name": "Slippery Slope",
+          "definition": "Asserting that small first step inevitably leads to chain of negative events",
+          "valence": -1.0,
+          "example": "If we allow this policy, next thing you know the government will control everything."
+        },
+        {
+          "id": 5,
+          "name": "Whataboutism",
+          "definition": "Deflection tactic that attempts to discredit opponent's position by charging hypocrisy",
+          "valence": -1.0,
+          "example": "But what about when the other side did the exact same thing? Why didn't you criticize them?"
+        },
+        {
+          "id": 6,
+          "name": "Loaded Language",
+          "definition": "Words with strong positive or negative connotations; emotive diction designed to bypass logic",
+          "valence": "variable",
+          "example": "Positive: 'freedom fighters' (loaded positive). Negative: 'thugs' (loaded negative)."
+        },
+        {
+          "id": 7,
+          "name": "Dog Whistle",
+          "definition": "Coded language that appears normal but communicates specific message to target subgroup",
+          "valence": -1.0,
+          "example": "Those people have such different values. Cultural incompatibility is real. (Using neutral language to activate stereotypes)"
+        },
+        {
+          "id": 8,
+          "name": "Proof by Gallup",
+          "definition": "Overwhelming the reader with excessive number of arguments to make refutation impossible",
+          "valence": -1.0,
+          "example": "Here are 50 studies! And 40 expert opinions! And 100 examples! (Makes debate about volume rather than quality)"
+        },
+        {
+          "id": 9,
+          "name": "Motte-and-Bailey",
+          "definition": "Conflating two positions - one modest (the Motte) one controversial (the Bailey) - retreating to modest one when challenged",
+          "valence": -1.0,
+          "example": "Women face discrimination. (Motte - defensible). Therefore men are completely unnecessary. (Bailey - controversial). Critics attack, so: 'I just said women face discrimination!'"
+        },
+        {
+          "id": 10,
+          "name": "Anaphora",
+          "definition": "Repetition of word/phrase at beginning of successive clauses for hypnotic/rallying effect",
+          "valence": 1.0,
+          "example": "We shall fight on the beaches. We shall fight on the landing grounds. We shall never surrender."
+        },
+        {
+          "id": 11,
+          "name": "Catastrophizing",
+          "definition": "Emphasizing negative consequences to induce anxiety/panic; appeal to fear",
+          "valence": -1.0,
+          "example": "If this policy passes, society as we know it will collapse. Economic devastation. Moral chaos."
+        },
+        {
+          "id": 12,
+          "name": "Appeal to Authority",
+          "definition": "Using 'expert' opinion when expert not qualified, or misrepresenting qualifications",
+          "valence": "variable",
+          "example": "A famous celebrity says this is true, so it must be. (Variable: legitimate if actual expert, illegitimate if false authority)"
+        },
+        {
+          "id": 13,
+          "name": "Bandwagon",
+          "definition": "Arguing something is right simply because many people believe it; appeal to popularity",
+          "valence": 1.0,
+          "example": "Everyone knows this is true. Most people believe. The consensus is."
+        },
+        {
+          "id": 14,
+          "name": "Euphemism / Dysphemism",
+          "definition": "Mild words masking harsh realities (euphemism) OR harsh words degrading neutral concepts (dysphemism)",
+          "valence": "variable",
+          "example": "Euphemism: 'collateral damage' (death). Dysphemism: 'welfare queens' (poor people receiving assistance)."
+        },
+        {
+          "id": 15,
+          "name": "Epistemic Closure",
+          "definition": "Rhetoric designed to prevent reader from considering outside sources; framing external critique as 'fake news' or 'enemy propaganda'",
+          "valence": -1.0,
+          "example": "Anything the mainstream media says is propaganda. Only trust approved sources. Don't listen to the other side's narrative."
+        }
+      ],
+      "key_insights": [
+        "Agency analysis reveals power structures: high passive voice = hidden accountability",
+        "Polarization language triggers tribal resonance: high us-vs-them ratio = stronger ingroup/outgroup activation",
+        "Dogmatism scores correlate with certainty claims: high dogmatism = low epistemological humility",
+        "Readability affects persuasion: populist style (grade 6-8) maximizes reach; academic style (grade 12+) signals expertise",
+        "Quantifier vagueness signals weak evidence: high vagueness ratio = rhetorical inflation over empirical grounding",
+        "Rhetorical device density indicates manipulation intent: higher density = more intensive persuasion effort",
+        "Net valence score indicates emotional tone: positive (building alliances), negative (enemy-making), neutral (analytical)"
+      ]
+    },
+    "template": "{content_and_framework}"
+  },
+  "note": "This prompt file contains the comprehensive framework for linguistic forensics analysis. The template variable {content_and_framework} will be replaced with the actual text to analyze plus the full framework description. All 6 dimensions and 15 rhetorical devices are defined here for consistency across analyses."
+}

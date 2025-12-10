@@ -1,5 +1,6 @@
 """Linguistic Analysis Module - Analyzes language patterns for manipulation detection."""
 import json
+from pathlib import Path
 from typing import Dict, Any, List
 from src.gemini_client import GeminiClient
 
@@ -20,6 +21,15 @@ class LinguisticAnalyzer:
     def __init__(self, gemini_client: GeminiClient):
         """Initialize with Gemini client."""
         self.client = gemini_client
+        self.prompts = self._load_prompts()
+    
+    def _load_prompts(self) -> Dict[str, Any]:
+        """Load prompts from JSON file."""
+        prompts_path = Path(__file__).parent.parent / "prompts" / "linguistic_analysis.json"
+        if prompts_path.exists():
+            with open(prompts_path, 'r') as f:
+                return json.load(f)
+        return {}
     
     def analyze_content(self, content: str) -> Dict[str, Any]:
         """
@@ -34,6 +44,41 @@ class LinguisticAnalyzer:
         """
         if not content or not content.strip():
             return self._empty_result()
+        
+        # Load framework from JSON or use inline fallback
+        framework_text = ""
+        if self.prompts and "analyze_content" in self.prompts:
+            framework_data = self.prompts["analyze_content"].get("framework", {})
+            if framework_data:
+                # Build framework from JSON definitions
+                framework_text = f"""LINGUISTIC FORENSICS FRAMEWORK - 6 DIMENSIONS + 15 RHETORICAL DEVICES:
+
+Linguistic analysis reveals manipulation patterns through systematic measurement of six language dimensions and identification of fifteen rhetorical devices. Each dimension and device has predictable effects on cognitive processing and tribal resonance.
+
+DIMENSIONS:
+1. Agency (Passive Voice): Responsibility obscured through passive constructions
+2. Polarization (Us vs Them): In-group/out-group language triggering tribal identity
+3. Certainty (Dogmatism): Epistemic confidence without qualification
+4. Readability (Complexity): Text sophistication affecting accessibility
+5. Quantifier Vagueness: Rhetorical inflation vs. evidence-based claims
+6. Persuasion Signature: Rhetorical device density and valence
+
+15 RHETORICAL DEVICES:
+1. Strawman Argument (misrepresent opponent)
+2. False Dichotomy (two options only)
+3. Ad Hominem (attack person not argument)
+4. Slippery Slope (small step leads to catastrophe)
+5. Whataboutism (deflection via hypocrisy charge)
+6. Loaded Language (emotive words)
+7. Dog Whistle (coded for subgroup)
+8. Proof by Gallup (overwhelming volume)
+9. Motte-and-Bailey (conflate positions)
+10. Anaphora (repetition for effect)
+11. Catastrophizing (emphasize negative)
+12. Appeal to Authority (expert citation)
+13. Bandwagon (popular = true)
+14. Euphemism/Dysphemism (reframing via word choice)
+15. Epistemic Closure (prevent outside consideration)"""
         
         prompt = f"""Perform a COMPREHENSIVE linguistic forensics analysis on this text.
 

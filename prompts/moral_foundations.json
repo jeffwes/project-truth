@@ -1,0 +1,81 @@
+{
+  "analyze_foundations": {
+    "description": "Analyze content for triggered moral foundations using Jonathan Haidt's framework",
+    "framework": {
+      "title": "MORAL FOUNDATIONS THEORY - COMPREHENSIVE FRAMEWORK",
+      "intro": "Moral Foundations Theory (Jonathan Haidt) identifies six innate psychological systems that shape moral judgment across cultures. These \"foundations\" are like taste receptors—everyone has them, but political tribes differ dramatically in which foundations they weight most heavily. Understanding which foundations a piece of content activates reveals its tribal targeting and persuasive strategy.",
+      "foundations": {
+        "care": {
+          "name": "CARE/HARM",
+          "core_concern": "Suffering, compassion, nurturing, protection of vulnerable",
+          "triggered_by": "Children in distress, victims of cruelty, medical suffering, vulnerable populations, protective instincts",
+          "political_patterns": {
+            "progressives": "VERY HIGH (primary moral foundation)",
+            "conservatives": "MODERATE (balanced with other foundations)"
+          },
+          "examples": "Healthcare access, child welfare, refugee protection, pandemic response, animal welfare"
+        },
+        "fairness": {
+          "name": "FAIRNESS/CHEATING",
+          "core_concern": "Justice, reciprocity, proportionality, equality, rights violations",
+          "triggered_by": "Unfair treatment, exploitation, unequal distribution, cheating, rule violations",
+          "political_patterns": {
+            "progressives": "VERY HIGH (equality/equity emphasis)",
+            "libertarians": "HIGH (procedural fairness, meritocracy)",
+            "conservatives": "MODERATE (proportional fairness, \"you get what you deserve\")"
+          },
+          "examples": "Taxation debates, affirmative action, economic inequality, legal rights, meritocracy vs. equity"
+        },
+        "loyalty": {
+          "name": "LOYALTY/BETRAYAL",
+          "core_concern": "Group cohesion, patriotism, tribal solidarity, team identity",
+          "triggered_by": "National symbols, in-group pride, betrayal of the group, team sports, military service",
+          "political_patterns": {
+            "conservatives": "VERY HIGH (\"America First\", military reverence)",
+            "progressives": "LOW (universal humanity emphasis, skepticism of nationalism)"
+          },
+          "examples": "Flag rituals, immigration restrictionism, \"anti-American\" accusations, \"with us or against us\" rhetoric"
+        },
+        "authority": {
+          "name": "AUTHORITY/SUBVERSION",
+          "core_concern": "Respect for hierarchy, tradition, leadership, social order",
+          "triggered_by": "Deference to legitimate authority, respect for tradition, order vs. chaos, rebellion against rightful power",
+          "political_patterns": {
+            "conservatives": "VERY HIGH (respect for police, military, religious authority, tradition)",
+            "progressives": "LOW (questioning authority, dismantling hierarchies)"
+          },
+          "examples": "\"Back the Blue\", religious authority, traditional gender roles, \"law and order\", institutional deference"
+        },
+        "sanctity": {
+          "name": "SANCTITY/DEGRADATION",
+          "core_concern": "Purity, sacredness, disgust, elevated ideals vs. contamination",
+          "triggered_by": "Purity/contamination, sacred values, moral disgust, spiritual elevation, bodily integrity",
+          "political_patterns": {
+            "religious_conservatives": "VERY HIGH (sexual purity, religious sanctity)",
+            "progressives": "MODERATE-LOW (but can be HIGH around environmental purity, body autonomy as sacred)"
+          },
+          "examples": "Sexual morality, religious reverence, \"sanctity of life\", environmental purity, bodily autonomy, GMO fears"
+        },
+        "liberty": {
+          "name": "LIBERTY/OPPRESSION",
+          "core_concern": "Freedom from domination, resistance to tyranny, individual autonomy",
+          "triggered_by": "Tyranny, oppression, bullying, freedom, resistance to control, individual rights",
+          "political_patterns": {
+            "libertarians": "VERY HIGH (primary foundation)",
+            "populists": "HIGH (anti-elite, anti-establishment)",
+            "progressives": "HIGH (anti-oppression, liberation movements)",
+            "conservatives": "MODERATE (freedom within order)"
+          },
+          "examples": "Free speech, gun rights, vaccine mandates, anti-authoritarianism, liberation movements, \"don't tread on me\""
+        }
+      },
+      "key_insights": [
+        "Progressives rely heavily on Care and Fairness, with lower emphasis on Loyalty, Authority, and Sanctity. This makes progressive messaging focused on suffering reduction and equality.",
+        "Conservatives weight all six foundations more evenly, with especially high Loyalty, Authority, and Sanctity. This makes conservative messaging emphasize tradition, order, and group cohesion.",
+        "Libertarians spike on Liberty/Oppression and downplay Authority, making them suspicious of both government power and social conformity pressure.",
+        "Most political conflict stems from tribes talking past each other because they're activating different moral foundations. What progressives see as compassion (high Care), conservatives may see as naive bleeding-heart sentimentality that ignores group boundaries (low Loyalty) and proper order (low Authority)."
+      ]
+    },
+    "template": "Analyze this content using Moral Foundations Theory (Jonathan Haidt).\n\nCONTENT:\n{content}\n\n{framework_text}\n\nFor each foundation, determine:\n1. Is it triggered? (true/false)\n2. Intensity (0.0-1.0): How strongly is it invoked?\n3. Specific triggers: What language/concepts activate this foundation?\n4. Valence: Is it appealed to positively or violated/attacked?\n\nReturn JSON in this structure:\n{{\n    \"care\": {{\n        \"triggered\": true/false,\n        \"intensity\": 0.0-1.0,\n        \"triggers\": [\"specific phrase or concept\", ...],\n        \"valence\": \"positive\" | \"negative\" | \"neutral\",\n        \"explanation\": \"brief explanation\"\n    }},\n    \"fairness\": {{ ... }},\n    \"loyalty\": {{ ... }},\n    \"authority\": {{ ... }},\n    \"sanctity\": {{ ... }},\n    \"liberty\": {{ ... }},\n    \"overall_profile\": \"Summary of the content's moral signature in 1-2 sentences\"\n}}"
+  }
+}
